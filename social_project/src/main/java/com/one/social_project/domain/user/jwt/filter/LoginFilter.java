@@ -1,4 +1,4 @@
-package com.one.social_project.domain.user.jwt.dto.filter;
+package com.one.social_project.domain.user.jwt.filter;
 
 import com.one.social_project.domain.user.dto.CustomUserDetails;
 import com.one.social_project.domain.user.jwt.util.JWTUtil;
