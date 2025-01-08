@@ -1,21 +1,18 @@
 package com.one.social_project.domain.user.jwt.util;
 
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.io.Decoders;
 
 @Component
 public class JWTUtil {
 
     private Key key;
-    private static final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15; // 15분
+    private static final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 1; // 1분
     private static final long REFRESH_TOKEN_EXPIRATION = 1000 * 60 * 60 * 24 * 7; // 7일
 
     public JWTUtil(@Value("${spring.jwt.secret}") String secret) {
@@ -35,13 +32,28 @@ public class JWTUtil {
 
     // 토큰 만료 여부 확인
     public Boolean isExpired(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration().before(new Date());
+        try {
+            Date expirationDate = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getExpiration();
+            // 만료된 토큰인지 확인
+            return expirationDate.before(new Date());
+        } catch (ExpiredJwtException e) {
+            // 만약 토큰이 만료되었으면 바로 true를 반환 (만료된 토큰임)
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            // JWT가 잘못되었거나 파싱 오류가 발생한 경우 처리
+            return false;
+        }
     }
 
     // 액세스 토큰 생성
-    public String createAccessToken(String username, String role) {
+    public String createAccessToken(String email, String role) {
         Claims claims = Jwts.claims();
-        claims.put("email", username);
+        claims.put("email", email);
         claims.put("role", role);
 
         return Jwts.builder()
@@ -53,9 +65,9 @@ public class JWTUtil {
     }
 
     // 리프레시 토큰 생성
-    public String createRefreshToken(String username, String role) {
+    public String createRefreshToken(String email, String role) {
         Claims claims = Jwts.claims();
-        claims.put("username", username);
+        claims.put("email", email);
         claims.put("role", role);
 
         return Jwts.builder()
@@ -74,10 +86,10 @@ public class JWTUtil {
         }
 
         // 리프레시 토큰에서 사용자 정보 추출
-        String username = getEmail(refreshToken);  // 이메일을 username으로 사용한다고 가정
+        String email = getEmail(refreshToken);  // 이메일을 email로 사용한다고 가정
         String role = getRole(refreshToken);  // 역할 정보 추출
 
         // 새로운 액세스 토큰 생성
-        return createAccessToken(username, role);
+        return createAccessToken(email, role);
     }
 }

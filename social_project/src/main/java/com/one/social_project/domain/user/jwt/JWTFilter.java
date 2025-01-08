@@ -42,23 +42,42 @@ public class JWTFilter extends OncePerRequestFilter {
             return;
         }
 
-        System.out.println("authorization now");
-        //Bearer 부분 제거 후 순수 토큰만 획득
-        String token = authorization.split(" ")[1];
+        String[] tokens = authorization.split(" ");
 
+        // 분리된 결과 출력
+            String tokenType = tokens[0]; // Bearer
+            String accessToken = tokens[1]; // 첫 번째 JWT 토큰
+            String refreshToken = tokens[2]; // 두 번째 JWT 토큰
+
+            System.out.println("Token Type: " + tokenType);
+            System.out.println("Access Token: " + accessToken);
+            System.out.println("Refresh Token: " + refreshToken);
+
+
+
+        boolean isAccessTokenExpired = jwtUtil.isExpired(accessToken);//액세스 토큰이 만료
+        boolean isRefreshTokenExpired = jwtUtil.isExpired(refreshToken);
+
+        System.out.println("액세스 토큰 만료 여부 : " + isAccessTokenExpired);
         //토큰 소멸 시간 검증
-        if (jwtUtil.isExpired(token)) {
+        if (isAccessTokenExpired)
+        {
+            if (!isRefreshTokenExpired)
+            {
+                System.out.println("토큰 재발급");
+                accessToken = jwtUtil.refreshAccessToken(refreshToken);
+            }
+            else {
+                System.out.println("token expired");
+                filterChain.doFilter(request, response);//조건이 해당되면 메소드 종료 (필수)
+                return;
+            }
 
-            System.out.println("token expired");
-            filterChain.doFilter(request, response);
-
-            //조건이 해당되면 메소드 종료 (필수)
-            return;
         }
 
         //토큰에서 email과 role 획득
-        String email = jwtUtil.getEmail(token);
-        String role = jwtUtil.getRole(token);
+        String email = jwtUtil.getEmail(accessToken);
+        String role = jwtUtil.getRole(accessToken);
         System.out.println("email: " + email + ", role: " + role);
 
         //userEntity를 생성하여 값 set
@@ -75,6 +94,7 @@ public class JWTFilter extends OncePerRequestFilter {
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
         //세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(authToken);
+        response.addHeader("Authorization", "Bearer " + accessToken + " " + refreshToken);
 
         filterChain.doFilter(request, response);
     }
