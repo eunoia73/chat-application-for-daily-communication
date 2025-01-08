@@ -3,6 +3,7 @@ package com.one.social_project.domain.user.controller;
 
 import com.one.social_project.domain.user.dto.CustomUserDetails;
 import com.one.social_project.domain.user.dto.JoinDto;
+import com.one.social_project.domain.user.dto.UserDto;
 import com.one.social_project.domain.user.entity.UserEntity;
 import com.one.social_project.domain.user.service.CustomUserDetailsService;
 import com.one.social_project.domain.user.service.JoinService;
@@ -21,8 +22,8 @@ private final JoinService joinService;
 private final CustomUserDetailsService customUserDetailsService;
 
     @PostMapping("/join")
-    public void join(@RequestBody JoinDto joinDto) throws Exception {
-        joinService.joinProcess(joinDto);
+    public ResponseEntity<UserDto> join(@Valid @RequestBody JoinDto joinDto) throws Exception {
+        return ResponseEntity.ok(joinService.joinProcess(joinDto));
     }
 
     @GetMapping("/admin")

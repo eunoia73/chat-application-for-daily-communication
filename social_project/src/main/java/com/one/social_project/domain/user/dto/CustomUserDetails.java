@@ -1,21 +1,17 @@
 package com.one.social_project.domain.user.dto;
 
 import com.one.social_project.domain.user.entity.UserEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class CustomUserDetails  implements UserDetails {
+@RequiredArgsConstructor
+public class CustomUserDetails implements UserDetails {
 
     private final UserEntity userEntity;
-
-    public CustomUserDetails(UserEntity userEntity) {
-
-        this.userEntity = userEntity;
-    }
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

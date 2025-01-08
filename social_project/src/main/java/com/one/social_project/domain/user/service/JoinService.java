@@ -1,6 +1,7 @@
 package com.one.social_project.domain.user.service;
 
 import com.one.social_project.domain.user.dto.JoinDto;
+import com.one.social_project.domain.user.dto.UserDto;
 import com.one.social_project.domain.user.entity.UserEntity;
 import com.one.social_project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ public class JoinService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public void joinProcess(JoinDto joinDto) throws Exception {
+    public UserDto joinProcess(JoinDto joinDto) throws Exception {
         String email = joinDto.getEmail();
         String password = joinDto.getPassword();
 
@@ -27,7 +28,8 @@ public class JoinService {
         userEntity.setEmail(email);
         userEntity.setPassword(bCryptPasswordEncoder.encode(password));
         userEntity.setRole("USER");
-
         userRepository.save(userEntity);
+
+        return UserDto.toDto(userEntity);
     }
 }
