@@ -1,6 +1,7 @@
 package com.one.social_project.domain.file.controller;
 
 import com.one.social_project.domain.file.dto.ChatFileDTO;
+import com.one.social_project.domain.file.entity.File;
 import com.one.social_project.domain.file.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -65,6 +66,16 @@ public class FileController {
     }
 
 
-
+    // 개발중..
+//    //파일 id로 파일 조회
+//    @GetMapping("/{id}")
+//    public ResponseEntity<?> getFile(@PathVariable("id") Long id) {
+//        File file = fileService.getFile(id);
+//        if (file == null) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(Map.of("error", "파일이 존재하지 않습니다."));
+//        }
+//        return ResponseEntity.ok(file);
+//    }
 
 }

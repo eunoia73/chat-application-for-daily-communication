@@ -1,7 +1,7 @@
 package com.one.social_project.domain.file.service;
 
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.*;
 import com.one.social_project.domain.file.dto.ChatFileDTO;
 import com.one.social_project.domain.file.entity.File;
 import com.one.social_project.domain.file.error.FileNotFoundException;
@@ -13,6 +13,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Service
@@ -43,7 +45,7 @@ public class FileService {
         String fileUrl = defaultUrl + fileName;
 
         //2. 파일 업로드
-        s3Client.putObject(bucketName, fileName, chatFileDTO.getFileInputStream(), getObjectMetadata(chatFileDTO));
+        uploadS3(chatFileDTO, fileName);
 
         //3. 파일 DTO를 Entity로 변환하여 db에 저장
         File file = File.builder()
@@ -68,6 +70,12 @@ public class FileService {
 
     }
 
+    //s3에 파일 업로드
+    PutObjectResult uploadS3(ChatFileDTO chatFileDTO, String fileName) {
+        return s3Client.putObject(bucketName, fileName, chatFileDTO.getFileInputStream(), getObjectMetadata(chatFileDTO));
+    }
+
+    //파일 메타데이터 생성
     private ObjectMetadata getObjectMetadata(ChatFileDTO chatFileDTO) {
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(chatFileDTO.getFileType());
@@ -75,6 +83,7 @@ public class FileService {
         return metadata;
     }
 
+    //파일 이름 생성
     private String generateFileName(ChatFileDTO chatFileDTO) {
         return UUID.randomUUID() + "_" + chatFileDTO.getFileName();
     }
@@ -108,6 +117,39 @@ public class FileService {
         }
     }
 
+
+    // 개발중..
+//    //파일 id로 파일 조회
+//    public File getFile(Long fileId) {
+//        File file = fileRepository.findById(fileId)
+//                .orElseThrow(() -> new FileNotFoundException("해당 파일이 존재하지 않습니다. id=" + fileId));
+//
+//        ChatFileDTO chatFileDTO = ChatFileDTO.builder()
+//                .id(file.getId())
+//                .fileName(file.getFileName())
+//                .fileType(file.getFileType())
+//                .fileSize(file.getFileSize())
+//                .fileUrl(file.getFileUrl())
+//                .build();
+//        PutObjectResult putObjectResult = getPutObjectResult(chatFileDTO);
+//        System.out.println("만료시간" + putObjectResult.getExpirationTime());
+//
+//
+//        System.out.println(file.getFileUrl());
+//        return file;
+//
+//
+//    }
+//
+//    //파일 url로 파일 조회
+//    PutObjectResult getPutObjectResult(ChatFileDTO chatFileDTO) {
+//        // URL-safe 파일명으로 인코딩
+//        String encodedFileName = URLEncoder.encode(chatFileDTO.getFileName(), StandardCharsets.UTF_8);
+//        //aws s3에 저장된 파일 url을 통해 파일 조회
+//        PutObjectResult putObjectResult = s3Client.putObject(bucketName, encodedFileName, chatFileDTO.getFileUrl());
+//        return putObjectResult;
+//    }
+//
 
 }
 
