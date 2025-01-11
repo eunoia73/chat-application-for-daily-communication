@@ -1,7 +1,7 @@
-package com.one.social_project.domain.user.user.repository;
+package com.one.social_project.domain.user.basic.repository;
 
 
-import com.one.social_project.domain.user.user.entity.Users;
+import com.one.social_project.domain.user.basic.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

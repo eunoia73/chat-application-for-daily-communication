@@ -1,15 +1,14 @@
 package com.one.social_project.domain.user.util.config;
 
-import com.one.social_project.domain.user.filter.JWTTokenGeneratorFilter;
 import com.one.social_project.domain.user.util.CustomAuthenticationProvider;
 import com.one.social_project.domain.user.util.CustomBasicAuthenticationEntryPoint;
 import com.one.social_project.domain.user.util.Handler.CustomAccessDeniedHandler;
 import com.one.social_project.domain.user.util.RedisSessionManager;
 import com.one.social_project.domain.user.util.logout.CustomLogoutSuccessHandler;
 import com.one.social_project.domain.user.filter.JWTTokenValidatorFilter;
-import com.one.social_project.domain.user.user.repository.UserRefreshTokenRepository;
-import com.one.social_project.domain.user.user.repository.UserRepository;
-import com.one.social_project.domain.user.user.service.TokenProvider;
+import com.one.social_project.domain.user.basic.repository.UserRefreshTokenRepository;
+import com.one.social_project.domain.user.basic.repository.UserRepository;
+import com.one.social_project.domain.user.basic.service.TokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -45,6 +44,7 @@ public class SecurityConfig {
 
     private final UserRepository userRepository;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
+
 
     // 인증과정 없이 요청 가능한 url
     String[] urlsToBePermittedAll = {"/hello", "/api/login", "/h2-console/**", "/**", "/files/**"};
@@ -97,6 +97,13 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/api/logout")
                         .addLogoutHandler(
+                                new CustomLogoutSuccessHandler(
+                                        redisSessionManager,
+                                        tokenProvider,
+                                        userRefreshTokenRepository,
+                                        userRepository)
+                        )
+                        .logoutSuccessHandler(
                                 new CustomLogoutSuccessHandler(
                                         redisSessionManager,
                                         tokenProvider,

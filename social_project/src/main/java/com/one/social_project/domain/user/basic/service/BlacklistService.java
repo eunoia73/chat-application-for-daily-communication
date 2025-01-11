@@ -1,7 +1,5 @@
-package com.one.social_project.domain.user.user.service;
+package com.one.social_project.domain.user.basic.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import com.one.social_project.domain.user.util.RedisSessionManager;
 

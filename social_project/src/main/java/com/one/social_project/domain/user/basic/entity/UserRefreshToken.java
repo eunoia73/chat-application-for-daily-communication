@@ -1,4 +1,4 @@
-package com.one.social_project.domain.user.user.entity;
+package com.one.social_project.domain.user.basic.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

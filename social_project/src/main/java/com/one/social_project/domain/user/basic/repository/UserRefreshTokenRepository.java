@@ -1,8 +1,8 @@
-package com.one.social_project.domain.user.user.repository;
+package com.one.social_project.domain.user.basic.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.one.social_project.domain.user.user.entity.UserRefreshToken;
-import com.one.social_project.domain.user.user.entity.Users;
+import com.one.social_project.domain.user.basic.entity.UserRefreshToken;
+import com.one.social_project.domain.user.basic.entity.Users;
 
 import java.util.Optional;
 

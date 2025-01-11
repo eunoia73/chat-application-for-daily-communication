@@ -1,4 +1,4 @@
-package com.one.social_project.domain.user.user.dto;
+package com.one.social_project.domain.user.basic.dto;
 
 
 import lombok.AllArgsConstructor;

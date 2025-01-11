@@ -1,10 +1,7 @@
-package com.one.social_project.domain.user.user.entity;
+package com.one.social_project.domain.user.basic.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
@@ -12,6 +9,7 @@ import lombok.Setter;
 @Table(name="users")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Users {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

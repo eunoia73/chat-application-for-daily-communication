@@ -1,4 +1,4 @@
-package com.one.social_project.domain.user.user.service;
+package com.one.social_project.domain.user.basic.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,14 +11,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import com.one.social_project.domain.user.user.entity.*;
+import com.one.social_project.domain.user.basic.entity.*;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
-import com.one.social_project.domain.user.user.repository.*;
+import com.one.social_project.domain.user.basic.repository.*;
 import com.one.social_project.domain.user.ApplicationConstants;
 
 import static com.one.social_project.domain.user.ApplicationConstants.JWT_SECRET_KEY;

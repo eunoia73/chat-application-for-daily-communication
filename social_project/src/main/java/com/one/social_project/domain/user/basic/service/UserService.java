@@ -1,12 +1,11 @@
-package com.one.social_project.domain.user.user.service;
+package com.one.social_project.domain.user.basic.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.one.social_project.domain.user.util.CustomUserDetails;
-import com.one.social_project.domain.user.user.dto.*;
-import com.one.social_project.domain.user.user.entity.UserRefreshToken;
-import com.one.social_project.domain.user.user.entity.Users;
-import com.one.social_project.domain.user.user.repository.UserRefreshTokenRepository;
-import com.one.social_project.domain.user.user.repository.UserRepository;
+import com.one.social_project.domain.user.basic.dto.*;
+import com.one.social_project.domain.user.basic.entity.UserRefreshToken;
+import com.one.social_project.domain.user.basic.entity.Users;
+import com.one.social_project.domain.user.basic.repository.UserRefreshTokenRepository;
+import com.one.social_project.domain.user.basic.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;

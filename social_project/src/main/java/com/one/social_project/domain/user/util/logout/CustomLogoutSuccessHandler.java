@@ -2,17 +2,17 @@ package com.one.social_project.domain.user.util.logout;
 
 import com.one.social_project.domain.user.ApplicationConstants;
 import com.one.social_project.domain.user.util.RedisSessionManager;
-import com.one.social_project.domain.user.user.entity.UserRefreshToken;
-import com.one.social_project.domain.user.user.entity.Users;
-import com.one.social_project.domain.user.user.repository.UserRefreshTokenRepository;
-import com.one.social_project.domain.user.user.repository.UserRepository;
+import com.one.social_project.domain.user.basic.entity.UserRefreshToken;
+import com.one.social_project.domain.user.basic.entity.Users;
+import com.one.social_project.domain.user.basic.repository.UserRefreshTokenRepository;
+import com.one.social_project.domain.user.basic.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
-import com.one.social_project.domain.user.user.service.TokenProvider;
+import com.one.social_project.domain.user.basic.service.TokenProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
 import java.util.Optional;
@@ -44,25 +44,28 @@ public class CustomLogoutSuccessHandler implements LogoutHandler, LogoutSuccessH
             UserRefreshToken userRefreshToken = userRefreshTokenRepository.findByUser(user).get();
 
             System.out.println("userRefreshToken : "+userRefreshToken);
+
             userRefreshToken.setAccessToken("");
             userRefreshTokenRepository.save(userRefreshToken);
             redisSessionManager.addToBlacklist(accessToken);
 
+
+
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        }
+    }
 
 
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response,
                                 Authentication authentication) throws IOException {
 
-
         if (authentication != null) {
             String username = authentication.getName(); // 로그아웃하는 사용자의 이름
         }
-
 
         // 로그아웃 완료 메시지를 JSON 형식으로 응답 본문에 전달
         response.setStatus(HttpServletResponse.SC_OK);  // HTTP 상태 코드 200 OK

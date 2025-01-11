@@ -1,7 +1,7 @@
-package com.one.social_project.domain.user.user.controller;
+package com.one.social_project.domain.user.basic.controller;
 
-import com.one.social_project.domain.user.user.service.UserService;
-import com.one.social_project.domain.user.user.dto.*;
+import com.one.social_project.domain.user.basic.service.UserService;
+import com.one.social_project.domain.user.basic.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

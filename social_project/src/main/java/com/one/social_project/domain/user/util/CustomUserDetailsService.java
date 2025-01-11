@@ -1,7 +1,7 @@
 package com.one.social_project.domain.user.util;
 
-import com.one.social_project.domain.user.user.entity.Users;
-import com.one.social_project.domain.user.user.repository.UserRepository;
+import com.one.social_project.domain.user.basic.entity.Users;
+import com.one.social_project.domain.user.basic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

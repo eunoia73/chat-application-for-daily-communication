@@ -2,8 +2,7 @@ package com.one.social_project.domain.user.filter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.one.social_project.domain.user.user.entity.Users;
-import com.one.social_project.domain.user.user.repository.*;
+import com.one.social_project.domain.user.basic.repository.*;
 import com.one.social_project.exception.dto.ErrorResponse;
 import com.one.social_project.exception.errorCode.UserErrorCode;
 import com.one.social_project.exception.exception.UserException;
@@ -27,7 +26,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.one.social_project.domain.user.user.entity.*;
+
 import com.one.social_project.domain.user.util.RedisSessionManager;
 import java.util.Date;
 
