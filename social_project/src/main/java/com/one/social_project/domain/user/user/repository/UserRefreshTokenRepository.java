@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface UserRefreshTokenRepository extends JpaRepository<UserRefreshToken, Long> {
     Optional<UserRefreshToken> findByUserAndReIssueCountLessThan(Users user, int count);
     Optional<UserRefreshToken> findByUser(Users user);
+    Optional<UserRefreshToken> findByAccessToken(String accessToken);
 }

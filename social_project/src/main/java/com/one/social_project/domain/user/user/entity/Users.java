@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name="users")
-@NoArgsConstructor()
+@NoArgsConstructor
 @AllArgsConstructor
 public class Users {
     @Id
@@ -20,19 +20,21 @@ public class Users {
     private String email;
     private String password;
     private String nickname;
+    private Boolean isFirstLogin;
 //    private LocalDateTime lastLogin;
 //    private boolean marketingAgreed;
 //    private boolean connected;
     private String role;
     private boolean activated;
 
-    public Users(String email, String password, String nickname, String role, boolean activated) {
+    public Users(String email, String password, String nickname, boolean isFirstLogin, String role, boolean activated) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
 //        this.lastLogin = lastLogin;
-//        this.marketingAgreed = marketingAgreed;
+//       this.marketingAgreed = marketingAgreed;
 //        this.connected = connected;
+        this.isFirstLogin = isFirstLogin;
         this.role = role;
         this.activated = activated;
     }

@@ -1,10 +1,15 @@
 package com.one.social_project.domain.user.filter;
 
 import com.one.social_project.domain.user.ApplicationConstants;
-import com.one.social_project.domain.user.config.CustomUserDetails;
+import com.one.social_project.domain.user.util.CustomUserDetails;
+import com.one.social_project.domain.user.util.RedisSessionManager;
+import com.one.social_project.domain.user.user.entity.UserRefreshToken;
 import com.one.social_project.domain.user.user.entity.Users;
+import com.one.social_project.domain.user.user.repository.UserRefreshTokenRepository;
 import com.one.social_project.domain.user.user.repository.UserRepository;
 import com.one.social_project.domain.user.user.service.TokenProvider;
+import com.one.social_project.exception.errorCode.UserErrorCode;
+import com.one.social_project.exception.exception.UserException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
@@ -12,6 +17,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,23 +29,39 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import com.one.social_project.exception.dto.ErrorResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;;
 
 @Component
 @RequiredArgsConstructor
 public class JWTTokenValidatorFilter extends OncePerRequestFilter {
 
-    private boolean isExecutedBefore = false;
-
     private final TokenProvider tokenProvider;
     private final UserRepository userRepository;
+    private final UserRefreshTokenRepository userRefreshTokenRepository;
+    private final RedisSessionManager redisSessionManager;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
 
         // 클라이언트가 보낸 access Token 추출하기
         // Bearer 공백 이후의 문자열을 추출한다.
         String accessToken = parseBearerToken(request, ApplicationConstants.JWT_HEADER);
 
+        if(redisSessionManager.isTokenBlacklisted(accessToken))
+        {
+                ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED, UserErrorCode.LOGOUT_USER.getMessage());
+                // JSON 응답을 작성하기 위한 ObjectMapper
+                ObjectMapper objectMapper = new ObjectMapper();
+                response.setStatus(errorResponse.getStatus().value());  // 401 Unauthorized
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+                return;
+        }
+        if(redisSessionManager.isTokenBlacklisted(accessToken))
+            throw new UserException(UserErrorCode.LOGOUT_USER);
         // 만약 클라이언트가 JWT 토큰을 보내지 않았다면 필터링을 수행하지 않는다.
         if(accessToken != null) {
             try {
@@ -50,9 +72,21 @@ public class JWTTokenValidatorFilter extends OncePerRequestFilter {
                 Map payloadFromJWTToken = tokenProvider.getPayloadFromJWTToken(accessToken);
 
                 Long userId = Long.parseLong(String.valueOf(payloadFromJWTToken.get("userId")));
-                Users user = userRepository.findById(userId)
-                        .orElseThrow(() -> new IllegalArgumentException("해당하는 유저가 없습니다"));
+               if(userRepository.findById(userId).isEmpty())
+               {
+                   ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND, UserErrorCode.USER_NOT_FOUND.getMessage());
+                    // JSON 응답을 작성하기 위한 ObjectMapper
+                   ObjectMapper objectMapper = new ObjectMapper();
+                   response.setStatus(errorResponse.getStatus().value());  // 401 Unauthorized
+                   response.setContentType("application/json;charset=UTF-8");
+                   response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+                   return;
+               }
 
+                Users user = userRepository.findById(userId).get();
+
+
+                user.setIsFirstLogin(false);
                 CustomUserDetails principal = new CustomUserDetails(userId, user.getEmail(), user.getPassword(), user.getRole(), user.getNickname());
 
 
@@ -62,7 +96,6 @@ public class JWTTokenValidatorFilter extends OncePerRequestFilter {
                         AuthorityUtils.commaSeparatedStringToAuthorityList(user.getRole()));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
 
             } catch (ExpiredJwtException e) {
                 // 클라이언트가 보낸 Access Token 유효기간 만료 시 실행되는 블록
@@ -108,6 +141,16 @@ public class JWTTokenValidatorFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
+            // 리프레시 토큰 수정
+
+            tokenProvider.getEmailFromToken(newAccessToken);
+            Users user = userRepository.findByEmail(newAccessToken)
+                    .orElseThrow(() -> new RuntimeException("사용자 없음"));
+
+            UserRefreshToken userRefreshToken = new UserRefreshToken(user,newAccessToken,refreshToken);
+            userRefreshTokenRepository.save(userRefreshToken);
+            System.out.println("액세스 토큰 갱신\n");
+
             response.setHeader("New-Access-Token", newAccessToken);
         } catch (Exception e) {
             request.setAttribute("exception", e);
@@ -118,9 +161,9 @@ public class JWTTokenValidatorFilter extends OncePerRequestFilter {
     // Access Token 과 Refresh-Token 중 어느 것을 추출할 것인지는 두 번째 인자로 전달하여 명시
     private String parseBearerToken(HttpServletRequest request, String headerName) {
         return Optional.ofNullable(request.getHeader(headerName))
-                .filter(headerValue -> headerValue.substring(0, 6).equalsIgnoreCase("Bearer"))
-                .map(headerValue -> headerValue.substring(7))
-                .orElse(null);
+                .filter(headerValue -> !headerValue.isEmpty() && headerValue.startsWith("Bearer "))  // 빈 문자열 및 "Bearer " 체크
+                .map(headerValue -> headerValue.substring(7))  // "Bearer " 이후 토큰 추출
+                .orElse(null);  // 조건에 맞지 않으면 null 반환
     }
 
     // 로그인 시에는 JWT 토큰이 없을 것이므로

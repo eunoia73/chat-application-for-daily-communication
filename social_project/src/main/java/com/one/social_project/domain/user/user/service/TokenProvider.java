@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import com.one.social_project.domain.user.user.entity.*;
 
@@ -30,6 +31,7 @@ public class TokenProvider {
     private final UserRepository userRepository;
     private final Environment env;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RedisTemplate<String, String> redisTemplate;
 
     private SecretKey secretKey = null;
 
@@ -70,6 +72,11 @@ public class TokenProvider {
                 .compact();
     }
 
+    public String getEmailFromToken(String token) throws JsonProcessingException {
+        String email = getPayloadFromJWTToken(token).get("email").toString();
+        return email;
+    }
+
     // 기존에 클라이언트가 보낸 만료된 oldAccessToken 을 이용하여 새 access Token 을 발급하는 과정이다.
     @Transactional
     public String recreateAccessToken(String oldAccessToken) throws JsonProcessingException {
@@ -99,13 +106,18 @@ public class TokenProvider {
     public void validateRefreshToken(String refreshToken, String oldAccessToken) throws JsonProcessingException {
         validateTokenIsExpiredOrTampered(refreshToken);
 
-        String username = getPayloadFromJWTToken(oldAccessToken).get("username").toString();
+        String username = getPayloadFromJWTToken(oldAccessToken).get("email").toString();
 
         Users user = userRepository.findByEmail(username).orElseThrow(() -> new IllegalStateException("해당하는 유저정보가 존재하지 않습니다"));
 
         userRefreshTokenRepository.findByUserAndReIssueCountLessThan(user, ApplicationConstants.REFRESH_TOKEN_RE_ISSUE_LIMIT)
                         .filter(userRefreshToken -> userRefreshToken.validateRefreshToken(refreshToken))
-                                .orElseThrow(() -> new ExpiredJwtException(null, null, "Refresh token Expired!"));
+                                .orElseThrow(() -> new RuntimeException("토큰 만료! 다시 로그인하세요"));
+    }
+
+    @Transactional
+    public void validateRefreshTokenLogout(String refreshToken) throws JsonProcessingException {
+        validateTokenIsExpiredOrTampered(refreshToken);
     }
 
     public void validateTokenIsExpiredOrTampered(String token) {

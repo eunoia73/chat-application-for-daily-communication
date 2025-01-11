@@ -1,4 +1,4 @@
-package com.one.social_project.domain.user.config;
+package com.one.social_project.domain.user.util;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

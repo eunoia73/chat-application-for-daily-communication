@@ -8,34 +8,38 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.one.social_project.domain.user.config.CustomUserDetails;
+import com.one.social_project.domain.user.util.CustomUserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
+
+import java.nio.file.AccessDeniedException;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class UserController {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
 
-
+    @PreAuthorize("hasAnyRole('user', 'admin')")
     @GetMapping("/users")
-    public ResponseEntity<UserDto> mypage(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<UserDto> mypage(@AuthenticationPrincipal CustomUserDetails userDetails) throws AccessDeniedException {
         return ResponseEntity.ok(userService.mypage(userDetails));
     }
 
     // 회원 가입 처리
     @PostMapping("/users")
-    public ResponseEntity<UserRegisterResultDto> register(@RequestBody UserRegisterDto userRegisterDto) {
+    public ResponseEntity<UserDto> register(@RequestBody UserRegisterDto userRegisterDto) {
         String hashedPassword = passwordEncoder.encode(userRegisterDto.getPassword());
         userRegisterDto.setPassword(hashedPassword);
 
-        UserRegisterResultDto result = userService.register(userRegisterDto);
+        UserDto result = userService.register(userRegisterDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
 
-    @PostMapping("/apiLogin")
+    @PostMapping("/login")
     public ResponseEntity<SignInResponse> apiLogin(@RequestBody SignInRequest signInRequest) {
 
         SignInResponse signInResponse = userService.signIn(signInRequest);
@@ -43,6 +47,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(signInResponse);
     }
+
+//    @GetMapping("/logout")
+//    public String logout(@RequestBody UserLogoutRequest logoutRequest) throws JsonProcessingException {
+//        System.out.println("asfsadf");
+//        userService.logout(logoutRequest.getToken());
+//        return "logged out";
+//    }
+
 
     @PatchMapping("/users/password")
     public ResponseEntity<String> updateUserInformation(

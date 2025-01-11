@@ -1,4 +1,4 @@
-package com.one.social_project.domain.user.config;
+package com.one.social_project.domain.user.util.Handler;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +17,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         String message = (accessDeniedException != null && accessDeniedException.getMessage() != null) ? accessDeniedException.getMessage() // 더욱 상세한 예외 관련 내용이 담겨있음.
                 : "Authorization Failed";
         String path = request.getRequestURI();
-        response.setHeader("spatz-authorization-denied-reason", "Authorization failed");
+        response.setHeader("authorization-denied-reason", "Authorization failed");
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType("application/json;charset=UTF-8");
         // 반환되는 JSON
