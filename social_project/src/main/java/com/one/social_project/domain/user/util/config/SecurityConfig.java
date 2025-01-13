@@ -115,6 +115,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID", "Authorization") // 쿠키 삭제
                         .permitAll()
                 )
+                .oauth2Login(withDefaults())
                 .logout(withDefaults());
 
         return http.build();

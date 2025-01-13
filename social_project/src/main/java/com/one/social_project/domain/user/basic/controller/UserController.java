@@ -48,13 +48,6 @@ public class UserController {
                 .body(signInResponse);
     }
 
-//    @GetMapping("/logout")
-//    public String logout(@RequestBody UserLogoutRequest logoutRequest) throws JsonProcessingException {
-//        System.out.println("asfsadf");
-//        userService.logout(logoutRequest.getToken());
-//        return "logged out";
-//    }
-
 
     @PatchMapping("/users/password")
     public ResponseEntity<String> updateUserInformation(
