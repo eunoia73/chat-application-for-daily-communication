@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -12,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class ChatMessageDTO {
 
     private String roomId;
-    private String senderId;
+    private String sender;
     private String message;
-    private String createdAt;
+    private LocalDateTime createdAt;
 }

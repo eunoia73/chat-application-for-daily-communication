@@ -8,5 +8,8 @@ import java.util.List;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
     // 특정 채팅방에 채팅 조회
-    List<ChatMessage> findByRoomIdOrderByCreatedAtAsc(String roomId);
+    List<ChatMessage> findMessagesByRoomIdOrderByCreatedAtAsc(String roomId);
+
+    // 특정 채팅방의 가장 최근 메시지 조회
+    ChatMessage findLatestMessageByRoomId(String roomId);
 }
