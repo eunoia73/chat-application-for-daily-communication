@@ -34,6 +34,6 @@ public class ChatMessageService {
 
     // 채팅방별 채팅 기록 조회
     public List<ChatMessage> getMessagesByRoomId(String roomId){
-        return chatMessageRepository.findMessagesByRoomIdOrderByCreatedAtAsc(roomId);
+        return chatMessageRepository.findByChatRoomRoomIdOrderByCreatedAtAsc(roomId);
     }
 }

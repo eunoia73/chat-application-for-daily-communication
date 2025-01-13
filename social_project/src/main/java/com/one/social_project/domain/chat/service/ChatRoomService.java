@@ -46,7 +46,7 @@ public class ChatRoomService {
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다.")) ;
 
     // 최근 메시지 조회
-    ChatMessage lastMessage = chatMessageRepository.findLatestMessageByRoomId(roomId);
+    ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(roomId);
 
     return ChatRoomDTO.builder()
             .roomId(chatRoom.getRoomId())
@@ -61,7 +61,7 @@ public class ChatRoomService {
         List<ChatRoom> chatRooms = chatRoomRepository.findAll();
 
         return chatRooms.stream().map(chatRoom -> {
-                    ChatMessage lastMessage = chatMessageRepository.findLatestMessageByRoomId(chatRoom.getRoomId());
+                    ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
 
             return ChatRoomDTO.builder()
                     .roomId(chatRoom.getRoomId())
