@@ -28,7 +28,6 @@ public class ChatMessage {
     @Column(nullable = false)
     private LocalDateTime createdAt; // 메시지 생성 시간
 
-
     // 연관된 채팅방
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
