@@ -1,9 +1,7 @@
 package com.one.social_project.domain.file.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.one.social_project.domain.file.dto.ChatFileDTO;
+import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.entity.File;
 import com.one.social_project.domain.file.error.FileNotFoundException;
 import com.one.social_project.domain.file.repository.FileRepository;
@@ -16,8 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -68,7 +64,7 @@ class FileServiceTest {
 //    @DisplayName("db 파일 업로드 및 삭제 test")
 //    void testUploadFileToDatabase() throws IOException {
 //        // given
-//        ChatFileDTO fileDTO = ChatFileDTO.builder()
+//        FileDTO fileDTO = FileDTO.builder()
 //                .fileName("test.jpg")
 //                .fileType("image/jpeg")
 //                .fileSize(1000L)
@@ -76,7 +72,7 @@ class FileServiceTest {
 //                .build();
 //
 //        // when
-//        ChatFileDTO savedFileDTO = fileService.uploadFile(fileDTO);
+//        FileDTO savedFileDTO = fileService.uploadFile(fileDTO);
 //
 //        // then
 //        assertNotNull(savedFileDTO);
@@ -103,7 +99,7 @@ class FileServiceTest {
         when(fileRepository.findById(1L)).thenReturn(Optional.<File>of(file));
 
         // 서비스 메서드를 호출하고 결과를 검증
-        ChatFileDTO result = fileService.getFile(1L);
+        FileDTO result = fileService.getFile(1L);
 
         // 반환된 파일이 null이 아니고, id와 파일명이 일치하는지 확인
         assertNotNull(result);

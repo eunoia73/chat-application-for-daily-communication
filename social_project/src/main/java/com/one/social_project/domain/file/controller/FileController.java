@@ -1,7 +1,9 @@
 package com.one.social_project.domain.file.controller;
 
 import com.one.social_project.domain.file.dto.ChatFileDTO;
-import com.one.social_project.domain.file.entity.File;
+import com.one.social_project.domain.file.dto.FileDTO;
+import com.one.social_project.domain.file.dto.ProfileFileDTO;
+import com.one.social_project.domain.file.entity.FileCategory;
 import com.one.social_project.domain.file.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -34,10 +36,25 @@ public class FileController {
      */
 
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadFiles(@RequestPart("file") List<MultipartFile> files) throws IOException {
+    public ResponseEntity<?> uploadFiles(@RequestPart("file") List<MultipartFile> files,
+                                         @RequestParam("category") String category,
+//                                         @RequestParam("userId") Long id,
+                                         @RequestParam(value = "messageId", required = false) Long messageId) throws IOException {
 
+        List<FileDTO> uploadedFiles = new ArrayList<>();
 
-        List<ChatFileDTO> uploadedFiles = new ArrayList<>();
+        // 'chat' 카테고리일 때만 messageId 필수 체크
+        if ("chat".equalsIgnoreCase(category) && messageId == null) {
+            return ResponseEntity.badRequest().body("messageId는 chat 카테고리에서 필수입니다.");
+        }
+
+        // category를 FileCategory enum으로 변환
+        FileCategory fileCategory;
+        try {
+            fileCategory = FileCategory.valueOf(category.toUpperCase());  // "profile" -> FileCategory.PROFILE
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid category.");
+        }
 
         for (MultipartFile file : files) {
             // 파일이 비어있는지 검증
@@ -49,15 +66,30 @@ public class FileController {
             String escapedFileName = escapeHtml(file.getOriginalFilename());
 
             // 파일 DTO로 변환
-            ChatFileDTO chatFileDTO = ChatFileDTO.builder()
-                    .fileName(escapedFileName)
-                    .fileType(file.getContentType())
-                    .fileSize(file.getSize())
-                    .fileInputStream(file.getInputStream())
-                    .build();
+            FileDTO fileDTO = null;
+            if (fileCategory == FileCategory.PROFILE) {
+                fileDTO = ProfileFileDTO.builder()
+                        .fileName(escapedFileName)
+                        .fileType(file.getContentType())
+                        .fileSize(file.getSize())
+                        .fileInputStream(file.getInputStream())
+                        .category(FileCategory.PROFILE)
+                        .build();
+
+            } else if (fileCategory == FileCategory.CHAT) {
+                fileDTO = ChatFileDTO.builder()
+                        .fileName(escapedFileName)
+                        .fileType(file.getContentType())
+                        .fileSize(file.getSize())
+                        .fileInputStream(file.getInputStream())
+                        .category(FileCategory.CHAT)
+                        .chatMessageId(messageId)  //chat일때만 추가
+                        .build();
+
+            }
 
             // 파일을 서비스로 업로드
-            ChatFileDTO savedDTO = fileService.uploadFile(chatFileDTO);
+            FileDTO savedDTO = fileService.uploadFile(fileDTO);
 
             // 업로드된 파일 정보 추가
             uploadedFiles.add(savedDTO);
@@ -105,11 +137,26 @@ public class FileController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getFile(@PathVariable("id") Long id) {
-        ChatFileDTO fileDTO = fileService.getFile(id);
+        FileDTO fileDTO = fileService.getFile(id);
         if (fileDTO == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "파일이 존재하지 않습니다."));
         }
+        // 파일이 Profile일 경우
+        if (fileDTO instanceof ProfileFileDTO) {
+            return ResponseEntity.ok(fileDTO);  // ProfileFileDTO 반환
+        }
+
+        // 파일이 Chat일 경우
+        if (fileDTO instanceof ChatFileDTO) {
+            // ChatFileDTO에서 chatMessageId가 있는지 확인
+            if (((ChatFileDTO) fileDTO).getChatMessageId() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Chat 파일에 필요한 chatMessageId가 없습니다."));
+            }
+            return ResponseEntity.ok(fileDTO);  // ChatFileDTO 반환
+        }
+
         return ResponseEntity.ok(fileDTO);
     }
 
@@ -123,7 +170,7 @@ public class FileController {
     @GetMapping("/{id}/download")
     public ResponseEntity<?> downloadFile(@PathVariable("id") Long id) throws IOException {
         byte[] bytes = fileService.downloadFile(id);
-        ChatFileDTO file = fileService.getFile(id);
+        FileDTO file = fileService.getFile(id);
 
         //헤더 작성
         HttpHeaders httpHeaders = new HttpHeaders();

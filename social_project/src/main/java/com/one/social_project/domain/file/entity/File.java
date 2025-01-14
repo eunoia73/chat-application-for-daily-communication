@@ -1,5 +1,6 @@
 package com.one.social_project.domain.file.entity;
 
+import com.one.social_project.domain.chat.entity.ChatMessage;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -23,9 +24,9 @@ public class File {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(nullable = false)
-//    private FileCategory category;  // ENUM 타입으로 파일 카테고리 설정
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FileCategory category;  // ENUM 타입으로 파일 카테고리 설정
 
     @Column(nullable = false)
     private String fileName;
@@ -44,7 +45,10 @@ public class File {
 //
 //    @OneToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "chat_id")
-//    private Chat chat;  // 채팅 메시지와의 관계 (ManyToOne, 채팅 파일에만 필요)
+//    private ChatMessage chatMessage;  // 채팅 메시지와의 관계 (OneToOne)
+
+    @Column(nullable = true)  // chatMessageId를 null 가능하게 설정
+    private Long chatMessageId;
 
     @CreatedDate
     private LocalDateTime createdAt;

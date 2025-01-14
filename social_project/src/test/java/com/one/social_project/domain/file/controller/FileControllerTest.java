@@ -1,6 +1,6 @@
 package com.one.social_project.domain.file.controller;
 
-import com.one.social_project.domain.file.dto.ChatFileDTO;
+import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.service.FileService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -67,8 +66,8 @@ public class FileControllerTest {
         // HTML 태그가 포함된 파일 이름을 업로드하여 특수문자 처리 확인
         MultipartFile invalidFile = new MockMultipartFile("file", "<script>alert('test');</script>.jpg", "image/jpeg", new byte[1]);
 
-        when(fileService.uploadFile(any(ChatFileDTO.class))).thenReturn(
-                ChatFileDTO.builder()
+        when(fileService.uploadFile(any(FileDTO.class))).thenReturn(
+                FileDTO.builder()
                         .fileName("&lt;script&gt;alert('test');&lt;/script&gt;.jpg")
                         .fileType("image/jpeg")
                         .fileSize(1L)
@@ -87,8 +86,8 @@ public class FileControllerTest {
         // 유효한 파일 업로드
         MultipartFile validFile = new MockMultipartFile("file", "test.jpg", "image/jpeg", new byte[10]);
 
-        when(fileService.uploadFile(any(ChatFileDTO.class))).thenReturn(
-                ChatFileDTO.builder()
+        when(fileService.uploadFile(any(FileDTO.class))).thenReturn(
+                FileDTO.builder()
                         .fileName("test.jpg")
                         .fileType("image/jpeg")
                         .fileSize(10L)
@@ -104,9 +103,9 @@ public class FileControllerTest {
         MultipartFile file1 = new MockMultipartFile("file", "file1.jpg", "image/jpeg", new byte[10]);
         MultipartFile file2 = new MockMultipartFile("file", "file2.png", "image/png", new byte[15]);
 
-        when(fileService.uploadFile(any(ChatFileDTO.class)))
-                .thenReturn(ChatFileDTO.builder().fileName("file1.jpg").fileType("image/jpeg").fileSize(10L).build())
-                .thenReturn(ChatFileDTO.builder().fileName("file2.png").fileType("image/png").fileSize(15L).build());
+        when(fileService.uploadFile(any(FileDTO.class)))
+                .thenReturn(FileDTO.builder().fileName("file1.jpg").fileType("image/jpeg").fileSize(10L).build())
+                .thenReturn(FileDTO.builder().fileName("file2.png").fileType("image/png").fileSize(15L).build());
 
         mockMvc.perform(multipart("/api/files/upload")
                         .file((MockMultipartFile) file1)
@@ -179,7 +178,7 @@ public class FileControllerTest {
     @DisplayName("파일 조회 성공")
     public void testGetFile_success() throws Exception {
         Long fileId = 2L;
-        ChatFileDTO fileDTO = ChatFileDTO.builder()
+        FileDTO fileDTO = FileDTO.builder()
                 .fileName("test.jpg")
                 .fileType("image/jpeg")
                 .fileSize(100L)
