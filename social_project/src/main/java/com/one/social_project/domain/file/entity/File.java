@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @SuperBuilder
+@EntityListeners(AuditingEntityListener.class)
 @Entity
 @Table(name = "files")
 public class File {
@@ -46,6 +48,7 @@ public class File {
 
     @CreatedDate
     private LocalDateTime createdAt;
+    private LocalDateTime expiredAt;
 
 
     //==연관관계 메서드==//

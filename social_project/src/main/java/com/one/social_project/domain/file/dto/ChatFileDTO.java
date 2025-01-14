@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 public class ChatFileDTO {
 
@@ -22,8 +23,9 @@ public class ChatFileDTO {
     @JsonIgnore
     private InputStream fileInputStream;
     private String fileUrl;
-    @CreatedDate
     private LocalDateTime createdAt;
+    private LocalDateTime expiredAt;
+
 
     //    private String category;
 //    private Long userId;
