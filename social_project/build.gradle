@@ -81,8 +81,10 @@ dependencies {
 
     // tika-parsers
     implementation group: 'org.apache.tika', name: 'tika-core', version: '2.7.0'
-    // https://mvnrepository.com/artifact/org.apache.tika/tika-parsers
-    implementation group: 'org.apache.tika', name: 'tika-parsers', version: '2.7.0'
+    // https://mvnrepository.com/artifact/org.apache.tika/tika-parsers-standard-package
+//    implementation group: 'org.apache.tika', name: 'tika-parsers-standard-package', version: '2.7.0'
+
+
 
 
 }

@@ -13,6 +13,7 @@ import com.one.social_project.domain.file.repository.FileRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
@@ -76,16 +77,21 @@ public class FileService {
         InputStream originalInputStream = fileDTO.getFileInputStream();
         InputStream s3InputStream = originalInputStream; // 기본적으로 S3 업로드용 스트림
 
-        // PDF 파일일 경우에만 InputStream 복사 및 Tika 파싱
-        if ("pdf".equalsIgnoreCase(fileExtension)) {
-            byte[] inputBytes = originalInputStream.readAllBytes(); // InputStream 데이터를 읽어서 복사
-            InputStream tikaInputStream = new ByteArrayInputStream(inputBytes);
-            s3InputStream = new ByteArrayInputStream(inputBytes); // S3 업로드용으로도 복사
-
-            // Tika로 PDF 파싱
-            String parsedText = parsePdfFile(tikaInputStream);
-            System.out.println("parsedText = " + parsedText);
-        }
+//        // PDF 파일일 경우에만 InputStream 복사 및 Tika 파싱
+//        //if ("pdf".equalsIgnoreCase(fileExtension)) {
+//            byte[] inputBytes = originalInputStream.readAllBytes(); // InputStream 데이터를 읽어서 복사
+//            InputStream tikaInputStream = new ByteArrayInputStream(inputBytes);
+//            s3InputStream = new ByteArrayInputStream(inputBytes); // S3 업로드용으로도 복사
+//
+//            // Tika로 PDF 파싱
+////            String parsedText = parsePdfFile(tikaInputStream);
+////            System.out.println("parsedText = " + parsedText);
+//            //
+//            Tika tika = new Tika();
+//            String mimeType = tika.detect(fileDTO.getFileInputStream());
+//            System.out.println("MimeType : " + mimeType);
+//
+////        }
 
         //1. 파일 이름 변경, url 생성
         String fileName = generateFileName(fileDTO);
@@ -158,31 +164,31 @@ public class FileService {
         return dotIndex == -1 ? "" : fileName.substring(dotIndex + 1).toLowerCase();
     }
 
-    // Apache Tika를 이용하여 PDF 파일을 파싱
-    private String parsePdfFile(InputStream fileInputStream) throws IOException {
-        try (InputStream newInputStream = new ByteArrayInputStream(fileInputStream.readAllBytes())) {
-            // 고급 파서를 사용한 PDF 텍스트 추출
-            //InputStream newInputStream = new ByteArrayInputStream(fileInputStream.readAllBytes());
-            AutoDetectParser parser = new AutoDetectParser();
-            BodyContentHandler handler = new BodyContentHandler(); // 무제한 크기 허용
-            Metadata metadata = new Metadata();
-            ParseContext context = new ParseContext();
-
-            parser.parse(newInputStream, handler, metadata, context);
-            String parsedText = handler.toString();
-            System.out.println("!!!" + parsedText + "!!!");
-            if (parsedText.isBlank()) {
-                log.warn("PDF 파싱 성공했지만 내용이 비어 있습니다.");
-            } else {
-                log.info("PDF 파싱 성공. Parsed Text: {}", parsedText);
-            }
-
-            return parsedText;
-        } catch (TikaException | SAXException e) {
-            log.error("PDF 파싱 실패: {}", e.getMessage(), e);
-            throw new IOException("PDF 파싱 중 오류가 발생했습니다.", e);
-        }
-    }
+//    // Apache Tika를 이용하여 PDF 파일을 파싱
+//    private String parsePdfFile(InputStream fileInputStream) throws IOException {
+//        try (InputStream newInputStream = new ByteArrayInputStream(fileInputStream.readAllBytes())) {
+//            // 고급 파서를 사용한 PDF 텍스트 추출
+//            //InputStream newInputStream = new ByteArrayInputStream(fileInputStream.readAllBytes());
+//            AutoDetectParser parser = new AutoDetectParser();
+//            BodyContentHandler handler = new BodyContentHandler(); // 무제한 크기 허용
+//            Metadata metadata = new Metadata();
+//            ParseContext context = new ParseContext();
+//
+//            parser.parse(newInputStream, handler, metadata, context);
+//            String parsedText = handler.toString();
+//            //System.out.println("!!!" + parsedText + "!!!");
+//            if (parsedText.isBlank()) {
+//                log.warn("PDF 파싱 성공했지만 내용이 비어 있습니다.");
+//            } else {
+//                log.info("PDF 파싱 성공. Parsed Text: {}", parsedText);
+//            }
+//
+//            return parsedText;
+//        } catch (TikaException | SAXException e) {
+//            log.error("PDF 파싱 실패: {}", e.getMessage(), e);
+//            throw new IOException("PDF 파싱 중 오류가 발생했습니다.", e);
+//        }
+//    }
 
 
     //s3에 파일 업로드
