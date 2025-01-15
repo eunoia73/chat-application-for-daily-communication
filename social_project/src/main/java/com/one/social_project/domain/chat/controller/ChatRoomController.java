@@ -88,10 +88,10 @@ public class ChatRoomController {
     }
 
     // 채팅방 삭제(추후 삭제 -> 나가기)
-    @DeleteMapping("/{roomId}/delete")
-    public ResponseEntity<String> deleteChatRoom(@PathVariable("roomId") String roomId) {
+    @DeleteMapping("/{roomId}/leave/{participantId}")
+    public ResponseEntity<String> leaveChatRoom(@PathVariable("roomId") String roomId, @PathVariable("participantId") String participantId) {
         try {
-            String result = chatRoomService.deleteChatRoom(roomId);
+            String result = chatRoomService.leaveChatRoom(roomId, participantId);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body("채팅방을 찾을 수 없습니다.");

@@ -67,11 +67,25 @@ public class ChatRoomService {
     }
 
     // 채팅방 삭제(추후 삭제 -> 나가기)
-    public String deleteChatRoom(String roomId) {
+    public String leaveChatRoom(String roomId, String participantId) {
+        // 채팅방 확인
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
-        chatRoomRepository.delete(chatRoom);
-        return "채팅방 삭제 완료!";
+
+        // 참여자 확인
+        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserId(roomId, participantId)
+                        .orElseThrow(() -> new RuntimeException("참여자가 채팅방에 존재하지 않습니다."));
+
+        // 참여자 제거
+        chatParticipantsRepository.delete(participant);
+
+        // 채팅방에 남은 참여자가 없으면 채팅방 사용
+        List<ChatParticipants> checkParticipants = chatParticipantsRepository.findByChatRoomRoomId(roomId);
+        if(checkParticipants.isEmpty()){
+            chatRoomRepository.delete(chatRoom);
+            return "채팅방이 삭제되었습니다.";
+        }
+        return "채팅방에서 나갔습니다.";
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
