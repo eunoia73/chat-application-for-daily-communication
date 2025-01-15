@@ -47,64 +47,22 @@ public class ChatRoomService {
         // 채팅방 조회
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
-
-        // 참여자 ID 목록 추출
-        List<String> participantsUserIds = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
-                .stream()
-                .map(ChatParticipants::getUserId)
-                .collect(Collectors.toList());
-
-        // 최근 메시지 조회
-        ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(roomId);
-
-        // DTO 반환
-        return ChatRoomDTO.builder()
-                .roomId(chatRoom.getRoomId())
-                .roomName(chatRoom.getRoomName())
-                .roomType(chatRoom.getRoomType())
-                .ownerId(chatRoom.getOwnerId())
-                .createdAt(chatRoom.getCreatedAt())
-                .participants(participantsUserIds)
-                .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
-                .build();
+        return convertToDTO(chatRoom);
     }
 
     // 모든 채팅방 조회
     public List<ChatRoomDTO> getAllChatRooms() {
         List<ChatRoom> chatRooms = chatRoomRepository.findAll();
-
-        // 최근 메시지 조회
-        return chatRooms.stream().map(chatRoom -> {
-            ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
-
-            // 참여자 ID 목록 추출
-            List<String> participantsUserIds = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
-                    .stream()
-                    .map(ChatParticipants::getUserId)
-                    .collect(Collectors.toList());
-
-            // DTO 반환
-            return ChatRoomDTO.builder()
-                    .roomId(chatRoom.getRoomId())
-                    .roomName(chatRoom.getRoomName())
-                    .roomType(chatRoom.getRoomType())
-                    .ownerId(chatRoom.getOwnerId())
-                    .createdAt(chatRoom.getCreatedAt())
-                    .participants(participantsUserIds)
-                    .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
-                    .build();
-        }).collect(Collectors.toList());
+        return chatRooms.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     // 특정 채팅방 참여자 상세 조회
     public List<ChatParticipantsDTO> getChatRoomParticipants(String roomId){
         return chatParticipantsRepository.findByChatRoomRoomId(roomId)
                 .stream()
-                .map(chatParticipants -> ChatParticipantsDTO.builder()
-                        .roomId(roomId)
-                        .userId(chatParticipants.getUserId())
-                        .role(chatParticipants.getChatRole())
-                        .build())
+                .map(chatParticipants -> convertToParticipantsDTO(chatParticipants, roomId))
                 .collect(Collectors.toList());
     }
 
@@ -145,15 +103,14 @@ public class ChatRoomService {
                         .chatRoom(chatRoom)
                         .userId(user1)
                         .chatRole(ChatRole.OWNER) // 방장
-                        .build()
-        );
+                        .build());
+
         chatParticipantsRepository.save(
                 ChatParticipants.builder()
                         .chatRoom(chatRoom)
                         .userId(user2)
                         .chatRole(ChatRole.MEMBER) // 일반 멤버
-                        .build()
-        );
+                        .build());
 
         return convertToDTO(chatRoom);
     }
@@ -190,9 +147,9 @@ public class ChatRoomService {
                             .chatRoom(chatRoom)
                             .userId(participants.get(i))
                             .chatRole(chatRole)
-                            .build()
-            );
+                            .build());
         }
+
         return convertToDTO(chatRoom);
     }
 
@@ -201,23 +158,16 @@ public class ChatRoomService {
         return (user1.compareTo(user2) < 0) ? user1 + ":" + user2 : user2 + ":" + user1;
     }
 
-    // entity -> dto
+    // ChatRoom Entity -> DTO
     private ChatRoomDTO convertToDTO(ChatRoom chatRoom) {
         // 참여자 정보를 추출 및 DTO 변환
-        List<ChatParticipantsDTO> participantsDTOS = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
+        List<String> participantUserIds = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
-                .map(chatParticipants -> ChatParticipantsDTO.builder()
-                        .roomId(chatRoom.getRoomId())
-                        .userId(chatParticipants.getUserId())
-                        .role(chatParticipants.getChatRole())
-                        .build())
-                .toList();
-
-        // 참여자 ID 목록 생성
-        List<String> participantUserIds = participantsDTOS.stream()
-                .map(ChatParticipantsDTO::getUserId)
+                .map(ChatParticipants::getUserId)
                 .collect(Collectors.toList());
 
+        // 최근 메시지 조회
+        ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
 
         return ChatRoomDTO.builder()
                 .roomId(chatRoom.getRoomId())
@@ -226,6 +176,16 @@ public class ChatRoomService {
                 .roomType(chatRoom.getRoomType())
                 .createdAt(chatRoom.getCreatedAt())
                 .participants(participantUserIds)
+                .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
+                .build();
+    }
+
+    // ChatParticipants Entity -> DTO
+    private ChatParticipantsDTO convertToParticipantsDTO(ChatParticipants participants, String roomId){
+        return ChatParticipantsDTO.builder()
+                .roomId(roomId)
+                .userId(participants.getUserId())
+                .role(participants.getChatRole())
                 .build();
     }
 }
