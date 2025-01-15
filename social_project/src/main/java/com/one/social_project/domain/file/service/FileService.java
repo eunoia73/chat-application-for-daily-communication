@@ -14,15 +14,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.BodyContentHandler;
 import org.springframework.beans.factory.annotation.Value;
 import com.amazonaws.services.s3.AmazonS3;
 import org.springframework.stereotype.Service;
-import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -53,6 +47,7 @@ public class FileService {
 
     private String defaultUrl;
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "pdf", "txt", "doc", "ppt", "gif", "mp4", "zip", "docx", "pptx", "xlsx", "xls");
+    private static final List<String> ALLOWED_EXTENSIONS_PROFILE = Arrays.asList("jpg", "jpeg", "png", "gif");
 
 
     @PostConstruct
@@ -71,30 +66,30 @@ public class FileService {
 
         // 파일 확장자 검증
         String fileExtension = getFileExtension(fileDTO.getFileName());
-        if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
+        if (fileDTO.getCategory() == FileCategory.PROFILE) {
+            if (!ALLOWED_EXTENSIONS_PROFILE.contains(fileExtension)) {
+                throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
+            }
+        } else if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
             throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
         }
         log.info("file={}", fileExtension);
 
-
+        //tika를 이용하여 확장자 임의변경 파일 찾아내기
         InputStream originalInputStream = fileDTO.getFileInputStream();
-        InputStream s3InputStream = originalInputStream; // 기본적으로 S3 업로드용 스트림
+        byte[] inputBytes = originalInputStream.readAllBytes(); // InputStream 데이터를 읽어서 복사
 
-//        // PDF 파일일 경우에만 InputStream 복사 및 Tika 파싱
-//        //if ("pdf".equalsIgnoreCase(fileExtension)) {
-//            byte[] inputBytes = originalInputStream.readAllBytes(); // InputStream 데이터를 읽어서 복사
-//            InputStream tikaInputStream = new ByteArrayInputStream(inputBytes);
-//            s3InputStream = new ByteArrayInputStream(inputBytes); // S3 업로드용으로도 복사
-//
-//            // Tika로 PDF 파싱
-////            String parsedText = parsePdfFile(tikaInputStream);
-////            System.out.println("parsedText = " + parsedText);
-//            //
-//            Tika tika = new Tika();
-//            String mimeType = tika.detect(fileDTO.getFileInputStream());
-//            System.out.println("MimeType : " + mimeType);
-//
-////        }
+        Tika tika = new Tika();
+        String mimeType = tika.detect(new ByteArrayInputStream(inputBytes));
+        System.out.println(fileDTO.getFileType());
+        System.out.println("MimeType : " + mimeType);
+        // MIME 타입이 파일 DTO에 정의된 파일 타입과 일치하지 않는 경우 예외 발생
+        if (!fileDTO.getFileType().equals(mimeType)) {
+            throw new IllegalArgumentException("파일 확장자와 MIME 타입이 일치하지 않습니다.");
+        }
+        // S3 업로드용 InputStream 생성
+        InputStream s3InputStream = new ByteArrayInputStream(inputBytes);
+
 
         //1. 파일 이름 변경, url 생성
         String fileName = generateFileName(fileDTO);
@@ -166,32 +161,6 @@ public class FileService {
         int dotIndex = fileName.lastIndexOf(".");
         return dotIndex == -1 ? "" : fileName.substring(dotIndex + 1).toLowerCase();
     }
-
-//    // Apache Tika를 이용하여 PDF 파일을 파싱
-//    private String parsePdfFile(InputStream fileInputStream) throws IOException {
-//        try (InputStream newInputStream = new ByteArrayInputStream(fileInputStream.readAllBytes())) {
-//            // 고급 파서를 사용한 PDF 텍스트 추출
-//            //InputStream newInputStream = new ByteArrayInputStream(fileInputStream.readAllBytes());
-//            AutoDetectParser parser = new AutoDetectParser();
-//            BodyContentHandler handler = new BodyContentHandler(); // 무제한 크기 허용
-//            Metadata metadata = new Metadata();
-//            ParseContext context = new ParseContext();
-//
-//            parser.parse(newInputStream, handler, metadata, context);
-//            String parsedText = handler.toString();
-//            //System.out.println("!!!" + parsedText + "!!!");
-//            if (parsedText.isBlank()) {
-//                log.warn("PDF 파싱 성공했지만 내용이 비어 있습니다.");
-//            } else {
-//                log.info("PDF 파싱 성공. Parsed Text: {}", parsedText);
-//            }
-//
-//            return parsedText;
-//        } catch (TikaException | SAXException e) {
-//            log.error("PDF 파싱 실패: {}", e.getMessage(), e);
-//            throw new IOException("PDF 파싱 중 오류가 발생했습니다.", e);
-//        }
-//    }
 
 
     //s3에 파일 업로드
@@ -329,7 +298,6 @@ public class FileService {
             throw new FileNotFoundException("파일이 만료되었습니다. id=" + fileId);
         }
 
-        String fileUrl = file.getFileUrl();
         S3Object s3object = s3Client.getObject(bucketName, file.getFileName());
         if (s3object == null) {
             throw new java.io.FileNotFoundException();
@@ -340,14 +308,6 @@ public class FileService {
         return bytes;
     }
 
-    //    //파일 url로 파일 조회
-//    PutObjectResult getPutObjectResult(FileDTO chatFileDTO) {
-//        // URL-safe 파일명으로 인코딩
-//        String encodedFileName = URLEncoder.encode(chatFileDTO.getFileName(), StandardCharsets.UTF_8);
-//        //aws s3에 저장된 파일 url을 통해 파일 조회
-//        PutObjectResult putObjectResult = s3Client.putObject(bucketName, encodedFileName, chatFileDTO.getFileUrl());
-//        return putObjectResult;
-//    }
 
 }
 

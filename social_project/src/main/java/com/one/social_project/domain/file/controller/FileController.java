@@ -111,11 +111,6 @@ public class FileController {
         return ResponseEntity.ok(uploadedFiles);
     }
 
-//    // 파일 확장자 추출
-//    private String getFileExtension(String fileName) {
-//        int dotIndex = fileName.lastIndexOf(".");
-//        return dotIndex == -1 ? "" : fileName.substring(dotIndex + 1).toLowerCase();
-//    }
 
     //HTML 태그 방지
     private String escapeHtml(String input) {
