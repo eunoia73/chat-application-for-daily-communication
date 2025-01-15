@@ -1,5 +1,6 @@
 package com.one.social_project.domain.chat.controller;
 
+import com.one.social_project.domain.chat.dto.ChatParticipantsDTO;
 import com.one.social_project.domain.chat.dto.ChatRoomDTO;
 import com.one.social_project.domain.chat.dto.ChatRoomType;
 import com.one.social_project.domain.chat.entity.ChatMessage;
@@ -25,7 +26,6 @@ public class ChatRoomController {
     private final ChatMessageService chatMessageService;
 
     // 채팅방 생성 (개인 채팅방 또는 그룹 채팅방)
-
     @PostMapping("/createroom")
     public ResponseEntity<ChatRoomDTO> createChatRoom(@RequestBody ChatRoomDTO chatRoomDTO) {
         try {
@@ -78,6 +78,13 @@ public class ChatRoomController {
             return ResponseEntity.noContent().build(); // 204 No Content
         }
         return ResponseEntity.ok(messages);
+    }
+
+    // 특정 채팅방의 참여자 상세 조회
+    @GetMapping("/{roomId}/participants")
+    public ResponseEntity<List<ChatParticipantsDTO>> getChatRoomParticipants(@PathVariable String roomId){
+        List<ChatParticipantsDTO> participants = chatRoomService.getChatRoomParticipants(roomId);
+        return ResponseEntity.ok(participants);
     }
 
     // 채팅방 삭제(추후 삭제 -> 나가기)

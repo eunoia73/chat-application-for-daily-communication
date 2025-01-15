@@ -1,6 +1,5 @@
 package com.one.social_project.domain.chat.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.one.social_project.domain.chat.dto.ChatRoomType;
 import jakarta.persistence.*;
@@ -8,7 +7,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 
 @Entity
 @Table(name = "room")
@@ -33,6 +31,9 @@ public class ChatRoom {
     @Column(name = "room_type", nullable = false)
     private ChatRoomType roomType; // 채팅방 유형 (DM 또는 GM)
 
+    @Column(name = "owner_id", nullable = false)
+    private String ownerId; // 방장 사용자 ID
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt; // 채팅방 생성 시간
 
@@ -44,8 +45,5 @@ public class ChatRoom {
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatParticipants> participants;
-
-
-
 
 }

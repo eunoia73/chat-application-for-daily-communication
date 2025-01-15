@@ -1,6 +1,7 @@
 package com.one.social_project.domain.chat.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.one.social_project.domain.chat.dto.ChatRole;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +9,7 @@ import lombok.*;
 @Table(name = "participants")
 @Getter
 @Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatParticipants {
@@ -16,10 +18,16 @@ public class ChatParticipants {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "chat_room_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "chat_room_id", nullable = false)
     @JsonBackReference // 자식 역할의 필드에 붙입니다.
     private ChatRoom chatRoom;
 
     @Column(nullable = false)
     private String userId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private ChatRole chatRole; // 사용자 역할(Owner 또는 Member)
+
+
 }
