@@ -31,9 +31,6 @@ public class ChatRoom {
     @Column(name = "room_type", nullable = false)
     private ChatRoomType roomType; // 채팅방 유형 (DM 또는 GM)
 
-    @Column(name = "owner_id", nullable = false)
-    private String ownerId; // 방장 사용자 ID
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt; // 채팅방 생성 시간
 

@@ -91,7 +91,6 @@ public class ChatRoomService {
                 .roomId(roomId)
                 .roomName(user1 + " & " + user2)
                 .roomType(ChatRoomType.DM)
-                .ownerId(user1) // 첫 번째 사용자를 방장으로 결정
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -133,7 +132,6 @@ public class ChatRoomService {
                 .roomId(roomId)
                 .roomName(roomName)
                 .roomType(ChatRoomType.GM)
-                .ownerId(participants.get(0)) // 첫 번째 참가자에게 방장 권한 부여
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -166,13 +164,21 @@ public class ChatRoomService {
                 .map(ChatParticipants::getUserId)
                 .collect(Collectors.toList());
 
+        // 방장 정보 추출 (OWNER 역할을 가진 참여자)
+        String ownerId = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
+                .stream()
+                .filter(participant -> participant.getChatRole() == ChatRole.OWNER)
+                .map(ChatParticipants::getUserId)
+                .findFirst()
+                .orElse("Unknown");  // OWNER가 없으면 "Unknown"을 기본값으로 설정
+
         // 최근 메시지 조회
         ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
 
         return ChatRoomDTO.builder()
                 .roomId(chatRoom.getRoomId())
                 .roomName(chatRoom.getRoomName())
-                .ownerId(chatRoom.getOwnerId())
+                .ownerId(ownerId)
                 .roomType(chatRoom.getRoomType())
                 .createdAt(chatRoom.getCreatedAt())
                 .participants(participantUserIds)
