@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -16,4 +17,6 @@ public class ChatRoomDTO {
     private String roomName; // 채팅방 이름
     private LocalDateTime createdAt;
     private String lastMessage; // 최근 메시지
+    private ChatRoomType roomType;
+    private List<String> participants; // 참여자 정보 리스트
 }
