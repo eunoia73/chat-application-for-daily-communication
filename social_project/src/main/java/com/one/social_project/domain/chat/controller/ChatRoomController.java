@@ -87,7 +87,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(participants);
     }
 
-    // 채팅방 삭제(추후 삭제 -> 나가기)
+    // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
     @DeleteMapping("/{roomId}/leave/{participantId}")
     public ResponseEntity<String> leaveChatRoom(@PathVariable("roomId") String roomId, @PathVariable("participantId") String participantId) {
         try {

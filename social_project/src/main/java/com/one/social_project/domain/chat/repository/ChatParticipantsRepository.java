@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ChatParticipantsRepository extends JpaRepository<ChatParticipants, Long> {
+
+    // 특정 채팅방에 속한 모든 참여자 목록을 조회하는 메서드
     List<ChatParticipants> findByChatRoomRoomId(String roomId);
 
-    Optional<ChatParticipants> findByChatRoomRoomIdAndUserId(String roomId, String participantsId);
+    // 특정 채팅방과 특정 사용자(userId)에 해당하는 참여자를 조회하는 메서드
+    Optional<ChatParticipants> findByChatRoomRoomIdAndParticipantId(String roomId, String participantsId);
 }

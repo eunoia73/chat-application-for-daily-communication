@@ -66,14 +66,14 @@ public class ChatRoomService {
                 .collect(Collectors.toList());
     }
 
-    // 채팅방 삭제(추후 삭제 -> 나가기)
+    // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
     public String leaveChatRoom(String roomId, String participantId) {
         // 채팅방 확인
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
 
         // 참여자 확인
-        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserId(roomId, participantId)
+        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndParticipantId(roomId, participantId)
                         .orElseThrow(() -> new RuntimeException("참여자가 채팅방에 존재하지 않습니다."));
 
         // 참여자 제거
