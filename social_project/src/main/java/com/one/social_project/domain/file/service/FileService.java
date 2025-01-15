@@ -42,8 +42,11 @@ public class FileService {
     private final FileRepository fileRepository;
     private final AmazonS3 s3Client;
 
-    @Value("${cloud.aws.s3.bucket-name}")
+    @Value("${cloud.aws.s3.bucket-name-1}")
     private String bucketName;
+
+    @Value("${cloud.aws.s3.bucket-name-2}")
+    private String bucketNameResized;
 
     @Value("${cloud.aws.region.static}")
     private String region;
@@ -230,8 +233,12 @@ public class FileService {
                 .orElseThrow(() -> new FileNotFoundException("해당 파일이 존재하지 않습니다. id=" + fileId));
 
         try {
-            // 2. S3 파일 삭제
+            // 2-1. S3 원본 파일 삭제
             s3Client.deleteObject(bucketName, file.getFileName());
+
+            // 2-2. resized 파일 삭제
+            s3Client.deleteObject(bucketNameResized, "resized-" + file.getFileName());
+
             // 3. DB 파일 삭제
             fileRepository.delete(file);
 
@@ -300,16 +307,10 @@ public class FileService {
                     .category(FileCategory.CHAT)
                     .chatMessageId(file.getChatMessageId())  // chatMessageId는 ChatFileDTO에서 가져오기
                     .build();
-
         }
-
-
-        System.out.println(file.getFileUrl());
-
         return fileDTO;
 
     }
-
 
     /**
      * 파일 다운로드
