@@ -89,9 +89,9 @@ public class ChatRoomController {
 
     // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
     @DeleteMapping("/{roomId}/leave/{participantId}")
-    public ResponseEntity<String> leaveChatRoom(@PathVariable("roomId") String roomId, @PathVariable("participantId") String participantId) {
+    public ResponseEntity<String> leaveChatRoom(@PathVariable("roomId") String roomId, @PathVariable("participantId") String userId) {
         try {
-            String result = chatRoomService.leaveChatRoom(roomId, participantId);
+            String result = chatRoomService.leaveChatRoom(roomId, userId);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body("채팅방을 찾을 수 없습니다.");

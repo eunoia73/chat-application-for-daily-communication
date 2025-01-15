@@ -67,14 +67,28 @@ public class ChatRoomService {
     }
 
     // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
-    public String leaveChatRoom(String roomId, String participantId) {
+    public String leaveChatRoom(String roomId, String userId) {
         // 채팅방 확인
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
 
         // 참여자 확인
-        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndParticipantId(roomId, participantId)
+        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserId(roomId, userId)
                         .orElseThrow(() -> new RuntimeException("참여자가 채팅방에 존재하지 않습니다."));
+
+        //  채팅방 퇴장 시, OWNER 역할을 다른 참여자에게 위임
+        if(participant.getChatRole() == ChatRole.OWNER){
+            // OWNER 역할을 다른 참여자에게 위임
+            List<ChatParticipants> checkParticipants = chatParticipantsRepository.findByChatRoomRoomId(roomId);
+            for(ChatParticipants checkParticipant : checkParticipants){
+                if(checkParticipant.getChatRole() == ChatRole.MEMBER){
+                    // 첫 번째 MEMBER 에게 OWNER 역할 부여
+                    checkParticipant.setChatRole(ChatRole.OWNER);
+                    chatParticipantsRepository.save(checkParticipant);
+                    break;
+                }
+            }
+        }
 
         // 참여자 제거
         chatParticipantsRepository.delete(participant);
