@@ -1,5 +1,6 @@
 package com.one.social_project.domain.chat.dto;
 
+import com.one.social_project.domain.chat.constant.ChatRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

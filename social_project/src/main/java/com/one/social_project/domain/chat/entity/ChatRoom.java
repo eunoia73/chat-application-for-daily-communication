@@ -1,7 +1,7 @@
 package com.one.social_project.domain.chat.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.one.social_project.domain.chat.dto.ChatRoomType;
+import com.one.social_project.domain.chat.constant.ChatRoomType;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;

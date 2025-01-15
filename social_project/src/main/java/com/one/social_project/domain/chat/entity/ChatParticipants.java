@@ -1,7 +1,7 @@
 package com.one.social_project.domain.chat.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.one.social_project.domain.chat.dto.ChatRole;
+import com.one.social_project.domain.chat.constant.ChatRole;
 import jakarta.persistence.*;
 import lombok.*;
 

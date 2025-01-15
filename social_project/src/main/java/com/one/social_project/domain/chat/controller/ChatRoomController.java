@@ -2,7 +2,7 @@ package com.one.social_project.domain.chat.controller;
 
 import com.one.social_project.domain.chat.dto.ChatParticipantsDTO;
 import com.one.social_project.domain.chat.dto.ChatRoomDTO;
-import com.one.social_project.domain.chat.dto.ChatRoomType;
+import com.one.social_project.domain.chat.constant.ChatRoomType;
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ChatRoomService;

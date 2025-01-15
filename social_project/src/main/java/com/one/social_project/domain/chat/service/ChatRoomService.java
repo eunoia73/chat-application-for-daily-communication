@@ -1,9 +1,9 @@
 package com.one.social_project.domain.chat.service;
 
 import com.one.social_project.domain.chat.dto.ChatParticipantsDTO;
-import com.one.social_project.domain.chat.dto.ChatRole;
+import com.one.social_project.domain.chat.constant.ChatRole;
 import com.one.social_project.domain.chat.dto.ChatRoomDTO;
-import com.one.social_project.domain.chat.dto.ChatRoomType;
+import com.one.social_project.domain.chat.constant.ChatRoomType;
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.entity.ChatParticipants;
 import com.one.social_project.domain.chat.entity.ChatRoom;
