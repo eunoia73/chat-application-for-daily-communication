@@ -44,6 +44,7 @@ public class ChatRoomService {
 
     // 특정 채팅방 조회
     public ChatRoomDTO getChatRoom(String roomId) {
+        // 채팅방 조회
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
 
@@ -56,6 +57,7 @@ public class ChatRoomService {
         // 최근 메시지 조회
         ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(roomId);
 
+        // DTO 반환
         return ChatRoomDTO.builder()
                 .roomId(chatRoom.getRoomId())
                 .roomName(chatRoom.getRoomName())
@@ -71,6 +73,7 @@ public class ChatRoomService {
     public List<ChatRoomDTO> getAllChatRooms() {
         List<ChatRoom> chatRooms = chatRoomRepository.findAll();
 
+        // 최근 메시지 조회
         return chatRooms.stream().map(chatRoom -> {
             ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
 
@@ -80,6 +83,7 @@ public class ChatRoomService {
                     .map(ChatParticipants::getUserId)
                     .collect(Collectors.toList());
 
+            // DTO 반환
             return ChatRoomDTO.builder()
                     .roomId(chatRoom.getRoomId())
                     .roomName(chatRoom.getRoomName())
@@ -92,9 +96,8 @@ public class ChatRoomService {
         }).collect(Collectors.toList());
     }
 
-    // 채팅방 참여자 상세 조회
+    // 특정 채팅방 참여자 상세 조회
     public List<ChatParticipantsDTO> getChatRoomParticipants(String roomId){
-        // 채팅방 참여자 상세 정보 조회
         return chatParticipantsRepository.findByChatRoomRoomId(roomId)
                 .stream()
                 .map(chatParticipants -> ChatParticipantsDTO.builder()
@@ -113,11 +116,13 @@ public class ChatRoomService {
         return "채팅방 삭제 완료!";
     }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     // 개인 채팅방 생성
     private ChatRoomDTO createDirectChatRoom(String user1, String user2) {
         String roomId = generatePersonalRoomId(user1, user2);
 
-        // 기존 채팅방이 있는지 확인
+        // 기존 채팅방 확인
         Optional<ChatRoom> existingRoom = chatRoomRepository.findByRoomId(roomId);
         if (existingRoom.isPresent()) {
             return convertToDTO(existingRoom.get());
@@ -198,7 +203,7 @@ public class ChatRoomService {
 
     // entity -> dto
     private ChatRoomDTO convertToDTO(ChatRoom chatRoom) {
-        // 참여자 정보를 가져오고 DTO로 변환
+        // 참여자 정보를 추출 및 DTO 변환
         List<ChatParticipantsDTO> participantsDTOS = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
                 .map(chatParticipants -> ChatParticipantsDTO.builder()
@@ -208,7 +213,7 @@ public class ChatRoomService {
                         .build())
                 .toList();
 
-        // List<ChatParticipantsDTO> 에서 userId만 추출
+        // 참여자 ID 목록 생성
         List<String> participantUserIds = participantsDTOS.stream()
                 .map(ChatParticipantsDTO::getUserId)
                 .collect(Collectors.toList());
