@@ -3,6 +3,7 @@ package com.one.social_project.domain.file.service;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
+import com.one.social_project.domain.file.FileValidator;
 import com.one.social_project.domain.file.dto.ChatFileDTO;
 import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.amazonaws.services.s3.AmazonS3;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +36,7 @@ import java.util.UUID;
 public class FileService {
 
     private final FileRepository fileRepository;
+    private final FileValidator fileValidator;
     private final AmazonS3 s3Client;
 
     @Value("${cloud.aws.s3.bucket-name-1}")
@@ -46,8 +49,6 @@ public class FileService {
     private String region;
 
     private String defaultUrl;
-    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "pdf", "txt", "doc", "ppt", "gif", "mp4", "zip", "docx", "pptx", "xlsx", "xls");
-    private static final List<String> ALLOWED_EXTENSIONS_PROFILE = Arrays.asList("jpg", "jpeg", "png", "gif");
 
 
     @PostConstruct
@@ -64,32 +65,8 @@ public class FileService {
      */
     public FileDTO uploadFile(FileDTO fileDTO) throws IOException {
 
-        // 파일 확장자 검증
-        String fileExtension = getFileExtension(fileDTO.getFileName());
-        if (fileDTO.getCategory() == FileCategory.PROFILE) {
-            if (!ALLOWED_EXTENSIONS_PROFILE.contains(fileExtension)) {
-                throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
-            }
-        } else if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
-            throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
-        }
-        log.info("file={}", fileExtension);
-
-        //tika를 이용하여 확장자 임의변경 파일 찾아내기
-        InputStream originalInputStream = fileDTO.getFileInputStream();
-        byte[] inputBytes = originalInputStream.readAllBytes(); // InputStream 데이터를 읽어서 복사
-
-        Tika tika = new Tika();
-        String mimeType = tika.detect(new ByteArrayInputStream(inputBytes));
-        System.out.println(fileDTO.getFileType());
-        System.out.println("MimeType : " + mimeType);
-        // MIME 타입이 파일 DTO에 정의된 파일 타입과 일치하지 않는 경우 예외 발생
-        if (!fileDTO.getFileType().equals(mimeType)) {
-            throw new IllegalArgumentException("파일 확장자와 MIME 타입이 일치하지 않습니다.");
-        }
-        // S3 업로드용 InputStream 생성
-        InputStream s3InputStream = new ByteArrayInputStream(inputBytes);
-
+        //파일 검증
+        fileValidator.validateFile(fileDTO);
 
         //1. 파일 이름 변경, url 생성
         String fileName = generateFileName(fileDTO);
@@ -97,7 +74,7 @@ public class FileService {
 
         //2. 파일 업로드
         //InputStream fileInputStream = fileDTO.getFileInputStream();
-        fileDTO.setFileInputStream(s3InputStream);
+        fileDTO.setFileInputStream(fileDTO.getFileInputStream());
         PutObjectResult putObjectResult = uploadS3(fileDTO, fileName);
 
         //3. 파일 DTO를 Entity로 변환하여 db에 저장
@@ -154,12 +131,6 @@ public class FileService {
         //4. 파일DTO 반환
         return savedDTO;
 
-    }
-
-    // 파일 확장자 추출
-    private String getFileExtension(String fileName) {
-        int dotIndex = fileName.lastIndexOf(".");
-        return dotIndex == -1 ? "" : fileName.substring(dotIndex + 1).toLowerCase();
     }
 
 
