@@ -13,7 +13,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/chat/**").permitAll() // /api/chat/**는 인증 없이 접근 가능
+                        .requestMatchers("/api/chat/**","/chat/**").permitAll() // /api/chat/**는 인증 없이 접근 가능
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 );
 
