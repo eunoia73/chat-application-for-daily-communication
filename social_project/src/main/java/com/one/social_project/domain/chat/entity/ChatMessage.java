@@ -1,14 +1,14 @@
 package com.one.social_project.domain.chat.entity;
 
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "chat")
+
+@Document(collection = "chat") // MongoDB 컬렉션 이름 설정
 @Getter
 @Setter
 @Builder
@@ -16,8 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ChatMessage {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;            // Primary Key
+    private String id; // MongoDB는 기본적으로 String ID를 사용합니다.
 
     @Column(nullable = false)
     private String sender;      // 발신자
@@ -27,10 +26,6 @@ public class ChatMessage {
 
     @Column(nullable = false)
     private LocalDateTime createdAt; // 메시지 생성 시간
+    private String roomId; // 채팅방 ID (연관 관계 대신 필드로 관리)
 
-    // 연관된 채팅방
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false)
-    @JsonBackReference // 자식 역할의 필드에 붙입니다.
-    private ChatRoom chatRoom;
 }

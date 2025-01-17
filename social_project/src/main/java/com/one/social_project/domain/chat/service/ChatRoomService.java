@@ -7,7 +7,7 @@ import com.one.social_project.domain.chat.constant.ChatRoomType;
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.entity.ChatParticipants;
 import com.one.social_project.domain.chat.entity.ChatRoom;
-import com.one.social_project.domain.chat.repository.ChatMessageRepository;
+import com.one.social_project.domain.chat.repository.mongo.ChatMessageRepository;
 import com.one.social_project.domain.chat.repository.ChatParticipantsRepository;
 import com.one.social_project.domain.chat.repository.ChatRoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -76,18 +76,14 @@ public class ChatRoomService {
         ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserId(roomId, userId)
                         .orElseThrow(() -> new RuntimeException("참여자가 채팅방에 존재하지 않습니다."));
 
-        //  채팅방 퇴장 시, OWNER 역할을 다른 참여자에게 위임
-        if(participant.getChatRole() == ChatRole.OWNER){
-            // OWNER 역할을 다른 참여자에게 위임
-            List<ChatParticipants> checkParticipants = chatParticipantsRepository.findByChatRoomRoomId(roomId);
-            for(ChatParticipants checkParticipant : checkParticipants){
-                if(checkParticipant.getChatRole() == ChatRole.MEMBER){
-                    // 첫 번째 MEMBER 에게 OWNER 역할 부여
-                    checkParticipant.setChatRole(ChatRole.OWNER);
-                    chatParticipantsRepository.save(checkParticipant);
-                    break;
-                }
-            }
+        if (participant.getChatRole() == ChatRole.OWNER) {
+            chatParticipantsRepository.findByChatRoomRoomId(roomId).stream()
+                    .filter(p -> p.getChatRole() == ChatRole.MEMBER)
+                    .findFirst()
+                    .ifPresent(p -> {
+                        p.setChatRole(ChatRole.OWNER);
+                        chatParticipantsRepository.save(p);
+                    });
         }
 
         // 참여자 제거
@@ -95,8 +91,9 @@ public class ChatRoomService {
 
         // 채팅방에 남은 참여자가 없으면 채팅방 사용
         List<ChatParticipants> checkParticipants = chatParticipantsRepository.findByChatRoomRoomId(roomId);
-        if(checkParticipants.isEmpty()){
+        if (checkParticipants.isEmpty()) {
             chatRoomRepository.delete(chatRoom);
+            chatMessageRepository.deleteAllByRoomId(roomId); // 메시지 삭제
             return "채팅방이 삭제되었습니다.";
         }
         return "채팅방에서 나갔습니다.";
@@ -201,7 +198,7 @@ public class ChatRoomService {
                 .orElse("Unknown");  // OWNER가 없으면 "Unknown"을 기본값으로 설정
 
         // 최근 메시지 조회
-        ChatMessage lastMessage = chatMessageRepository.findFirstByChatRoomRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
+        ChatMessage lastMessage = chatMessageRepository.findFirstByRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
 
         return ChatRoomDTO.builder()
                 .roomId(chatRoom.getRoomId())
