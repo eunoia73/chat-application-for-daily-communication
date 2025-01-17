@@ -8,6 +8,8 @@ import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -71,9 +73,9 @@ public class ChatRoomController {
 
     // 특정 채팅방의 메시지 조회
     @GetMapping("/{roomId}/chat-list")
-    public ResponseEntity<List<ChatMessage>> getMessages(@PathVariable("roomId") String roomId) {
+    public ResponseEntity<Page<ChatMessage>> getMessages(@PathVariable("roomId") String roomId , Pageable pageable) {
         System.out.println("Room ID: " + roomId); // 디버깅용 출력
-        List<ChatMessage> messages = chatMessageService.getMessagesByRoomId(roomId);
+        Page<ChatMessage> messages = chatMessageService.getMessagesByRoomId(roomId , pageable);
         if (messages.isEmpty()) {
             return ResponseEntity.noContent().build(); // 204 No Content
         }
