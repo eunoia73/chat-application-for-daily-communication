@@ -1,19 +1,17 @@
 package com.one.social_project.domain.user.util.logout;
 
 import com.one.social_project.domain.user.ApplicationConstants;
+import com.one.social_project.domain.user.entity.User;
 import com.one.social_project.domain.user.util.RedisSessionManager;
-import com.one.social_project.domain.user.basic.entity.UserRefreshToken;
-import com.one.social_project.domain.user.basic.entity.Users;
-import com.one.social_project.domain.user.basic.repository.UserRefreshTokenRepository;
-import com.one.social_project.domain.user.basic.repository.UserRepository;
+import com.one.social_project.domain.user.repository.UserRepository;
+import com.one.social_project.domain.user.util.TokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
-import com.one.social_project.domain.user.basic.service.TokenProvider;
-import com.fasterxml.jackson.core.JsonProcessingException;
+
 import java.io.IOException;
 import java.util.Optional;
 
@@ -25,7 +23,6 @@ public class CustomLogoutSuccessHandler implements LogoutHandler, LogoutSuccessH
 
     private final RedisSessionManager redisSessionManager;
     private final TokenProvider tokenProvider;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
     private final UserRepository userRepository;
 
     @Override
@@ -35,27 +32,14 @@ public class CustomLogoutSuccessHandler implements LogoutHandler, LogoutSuccessH
         String accessToken =  parseBearerToken(request, ApplicationConstants.JWT_HEADER);
         System.out.println("헤더 : "+accessToken);
 
-        try {
-            String email = tokenProvider.getEmailFromToken(accessToken);
-            System.out.println("email : "+email);
+        String email = tokenProvider.getEmailFromAccessToken(accessToken);
+        System.out.println("email : "+email);
 
-            Users user = userRepository.findByEmail(email)
-                    .orElseThrow(()-> new RuntimeException("찾을 수 없음"));
-            UserRefreshToken userRefreshToken = userRefreshTokenRepository.findByUser(user).get();
-
-            System.out.println("userRefreshToken : "+userRefreshToken);
-
-            userRefreshToken.setAccessToken("");
-            userRefreshTokenRepository.save(userRefreshToken);
-            redisSessionManager.addToBlacklist(accessToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new RuntimeException("찾을 수 없음"));
+        redisSessionManager.addToBlacklist(accessToken);
 
 
-
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
 
