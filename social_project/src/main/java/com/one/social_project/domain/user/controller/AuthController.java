@@ -30,29 +30,24 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout()
-    {
+    public ResponseEntity<Void> logout() {
         userService.logout();
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/login/oauth/code/{provider}")
+    public ResponseEntity<LoginResDto> loginWithOAuth(@RequestParam("code") String code, @PathVariable("provider") String provider) {
+        OAuth2UserInfo oAuth2UserInfo = customOAuth2UserService.getUserInfoFromOAuth(provider, code);
+        oAuth2UserInfo.setProvider(provider);
 
-
-    @GetMapping("/login/oauth2/code/google")
-    public ResponseEntity<LoginResDto> loginGoogle(@RequestParam("code") String code) {
-
-        String googleAccessToken = customOAuth2UserService.getAccessToken(code);
-        OAuth2UserInfo oAuth2UserInfo = customOAuth2UserService.getUserInfoFromGoogle(googleAccessToken);
-        oAuth2UserInfo.setProvider("google");
-
-        if(!userService.isRegistered(oAuth2UserInfo.getEmail()))
-        {
+        if (!userService.isRegistered(oAuth2UserInfo.getEmail())) {
             RegisterReqDto registerReqDto = new RegisterReqDto();
             registerReqDto.setEmail(oAuth2UserInfo.getEmail());
             registerReqDto.setNickname(oAuth2UserInfo.getNickname());
             registerReqDto.setOauth2UserInfo(oAuth2UserInfo);
             userService.register(registerReqDto);
         }
+
         LoginReqDto loginReqDto = new LoginReqDto();
         loginReqDto.setEmail(oAuth2UserInfo.getEmail());
         loginReqDto.setIsSocialLogin(true);
