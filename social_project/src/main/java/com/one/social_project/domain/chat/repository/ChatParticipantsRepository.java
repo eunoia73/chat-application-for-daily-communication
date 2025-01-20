@@ -2,10 +2,12 @@ package com.one.social_project.domain.chat.repository;
 
 import com.one.social_project.domain.chat.entity.ChatParticipants;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface ChatParticipantsRepository extends JpaRepository<ChatParticipants, Long> {
 
     // 특정 채팅방에 속한 모든 참여자 목록을 조회하는 메서드
