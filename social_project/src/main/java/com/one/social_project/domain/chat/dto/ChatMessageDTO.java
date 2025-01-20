@@ -17,6 +17,6 @@ public class ChatMessageDTO {
     private String roomId;
     private String sender;
     private String message;
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 }
 
