@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.one.social_project.domain.chat.dto.ChatMessageDTO;
 import com.one.social_project.domain.chat.dto.ReadReceiptDTO;
 import com.one.social_project.domain.chat.service.ChatMessageService;
+import com.one.social_project.domain.chat.service.ReadReceiptService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     // 채팅방 별로 WebSocket 세션을 관리하기 위한 Map
     private final Map<String, List<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
     private final ChatMessageService chatMessageService; // 채팅 메시지 저장 및 관리 서비스
+    private final ReadReceiptService readReceiptService;
     private final ObjectMapper objectMapper; // JSON 파싱 도구
 
     /**
@@ -99,7 +101,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String messageId = chatMessageService.saveMessage(roomId, sender, message);
 
         // 읽음 상태를 즉시 브로드캐스트
-        List<String> readers = chatMessageService.getReadBy(messageId);
+        List<String> readers = readReceiptService.getReadBy(messageId);
 
         Map<String, Object> readReceiptResponse = Map.of(
                 "roomId", roomId,
@@ -114,7 +116,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     /**
      * 읽음 상태 처리.
      */
-    private void handleReadReceipt(ReadReceiptDTO readReceiptDTO) throws IOException {
+    private void handleReadReceipt(ReadReceiptDTO readReceiptDTO) {
         String roomId = readReceiptDTO.getRoomId();
         String messageId = readReceiptDTO.getMessage();
         String sender = readReceiptDTO.getSender(); // 읽음을 보고한 사용자
@@ -126,10 +128,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
         }
 
         // 메시지 읽음 처리 (sender를 읽은 사용자로 추가)
-        chatMessageService.markAsRead(messageId, sender);
+        readReceiptService.markAsRead(messageId, sender);
 
         // 읽음 상태 브로드캐스트 (readBy는 서버에서 조회)
-        List<String> readers = chatMessageService.getReadBy(messageId); // DB에서 읽은 사람 목록 조회
+        List<String> readers = readReceiptService.getReadBy(messageId); // DB에서 읽은 사람 목록 조회
 
         Map<String, Object> readReceiptResponse = Map.of(
                 "roomId", roomId,
@@ -139,7 +141,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         broadcast(roomId, createTextMessage(readReceiptResponse));
     }
-
 
     /**
      * 특정 채팅방의 모든 WebSocket 세션에 메시지를 브로드캐스트.

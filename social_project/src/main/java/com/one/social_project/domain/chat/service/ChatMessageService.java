@@ -40,47 +40,8 @@ public class ChatMessageService {
         return chatMessage.getId();
     }
 
-
     // 채팅방별 채팅 기록 조회
     public Page<ChatMessage> getMessagesByRoomId(String roomId, Pageable pageable){
         return chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId, pageable);
-    }
-
-    // 메시지를 읽은 사용자 추가
-    @Transactional
-    public void markAsRead(String messageId, String userId){
-        ChatMessage message = chatMessageRepository.findById(messageId)
-                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다. ID : "+ messageId));
-
-        // 읽음 상태 업데이트
-        if (!message.getReaders().contains(userId)) {
-            message.getReaders().add(userId);
-            chatMessageRepository.save(message);
-        } else {
-            System.out.println("이미 읽은 사용자입니다: messageId=" + messageId + ", userId=" + userId);
-        }
-    }
-
-    // 메시지를 읽은 사용자 목록 조회
-    @Transactional(readOnly = true)
-    public List<String> getReadBy(String messageId) {
-        ChatMessage message = chatMessageRepository.findById(messageId)
-                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다. ID: " + messageId));
-
-        // 읽은 사용자 목록 반환
-        return message.getReaders();
-    }
-
-    // 메시지를 읽은 사용자 목록 DTO 변환
-    public ReadReceiptDTO getReadStatus(String messageId){
-        ChatMessage message = chatMessageRepository.findById(messageId)
-                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다. ID : "+ messageId));
-
-        return new ReadReceiptDTO(
-                message.getRoomId(),
-                message.getMessage(),
-                message.getSender(),
-                message.getReaders()
-        );
     }
 }
