@@ -23,6 +23,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
     }
 
 
+    //날짜, 내용에 따른 동적 쿼리
     @Override
     public List<ChatMessage> searchByMessageAndDateRange(ChatSearchCondition chatSearchCondition) {
 
@@ -30,7 +31,9 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
         // MongoTemplate을 사용하여 정규식 쿼리 작성
         Query query = new Query();
         if (chatSearchCondition.getMessage() != null && !chatSearchCondition.getMessage().isEmpty()) {
-            query.addCriteria(Criteria.where("message").regex(".*" + chatSearchCondition.getMessage() + ".*", "i")); // 'i'는 대소문자 구분 없음
+            query.addCriteria(Criteria.where("message")
+                    .regex(".*" + chatSearchCondition.getMessage() + ".*", "i")); // 'i'는 대소문자 구분 없음
+
         }
 
         // yyMMdd' 형식으로 날짜 파싱
@@ -47,7 +50,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
 
             query.addCriteria(dateRangeCriteria);
 
-        }else if (chatSearchCondition.getCreatedAtGoe() != null && chatSearchCondition.getCreatedAtLoe() == null){
+        } else if (chatSearchCondition.getCreatedAtGoe() != null && chatSearchCondition.getCreatedAtLoe() == null) {
             LocalDateTime localDateTimeGoe = getLocalDateTimeGoe(chatSearchCondition, formatter);
             Criteria dateRangeCriteria = Criteria.where("createdAt")
                     .gte(localDateTimeGoe);
@@ -60,8 +63,9 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
             query.addCriteria(dateRangeCriteria);
         }
 
+        List<ChatMessage> result = mongoOperations.find(query, ChatMessage.class);
 
-        return mongoOperations.find(query, ChatMessage.class);
+        return result;
     }
 
     private static LocalDateTime getLocalDateTimeGoe(ChatSearchCondition chatSearchCondition, DateTimeFormatter formatter) {
