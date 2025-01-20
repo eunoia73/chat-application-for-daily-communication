@@ -1,14 +1,12 @@
 package com.one.social_project.domain.chat.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Entity(name = "read_receipt")
+@Entity
+@Table(name = "read_receipt")
 @Getter
 @Setter
 @Builder
