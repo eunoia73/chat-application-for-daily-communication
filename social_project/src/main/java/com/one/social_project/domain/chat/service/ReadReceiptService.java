@@ -55,6 +55,19 @@ public class ReadReceiptService {
         return message.getReaders();
     }
 
+    // 특정 채팅방에서 지정된 사용자가 읽지 않은 메시지의 개수를 계산
+    public int countUnreadMessages(String roomId, String userId) {
+        // 1. 데이터베이스에서 해당 채팅방의 모든 메시지를 가져옵니다.
+        List<ChatMessage> allMessages = chatMessageRepository.findByRoomId(roomId);
+
+        // 2. 읽지 않은 메시지 필터링
+        int unreadCount = (int) allMessages.stream()
+                .filter(message -> !readReceiptRepository.existsByMessageIdAndUserId(message.getId(), userId))
+                .count();
+
+        return unreadCount;
+    }
+
     // 메시지를 읽은 사용자 목록 DTO 변환
     public ReadReceiptDTO getReadStatus(String messageId){
         ChatMessage message = chatMessageRepository.findById(messageId)

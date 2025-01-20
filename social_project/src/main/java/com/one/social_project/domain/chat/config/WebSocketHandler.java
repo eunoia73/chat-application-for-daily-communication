@@ -58,29 +58,30 @@ public class WebSocketHandler extends TextWebSocketHandler {
      * 메시지를 JSON으로 파싱하고 해당 채팅방의 모든 세션에 메시지를 브로드캐스트합니다.
      */
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
             String payload = message.getPayload(); // 클라이언트에서 전송된 메시지 내용
-            System.out.println("Received payload: " + payload);
 
             // JSON 문자열을 ChatMessageDTO 객체로 변환
             ChatMessageDTO chatMessageDTO = objectMapper.readValue(payload, ChatMessageDTO.class);
-            validateMessage(chatMessageDTO); // 메시지 유효성 검사
 
             switch (chatMessageDTO.getChatType()) {
                 case "CHAT":
                     handleChatMessage(chatMessageDTO); // 채팅 메시지 처리
                     break;
+                case "UNREAD_COUNT":
+                    handleUnreadCountRequest(chatMessageDTO, session);
+                    break;
                 case "READ_RECEIPT":
-                    ReadReceiptDTO readReceiptDTO = objectMapper.readValue(message.getPayload(), ReadReceiptDTO.class);
+                    ReadReceiptDTO readReceiptDTO = objectMapper.readValue(payload, ReadReceiptDTO.class);
                     handleReadReceipt(readReceiptDTO); // 읽음 상태 처리
                     break;
                 default:
-                    sendMessage(session, "Error: 알 수 없는 chatType입니다.");
+                    sendError(session, "Error: 알 수 없는 chatType입니다.");
             }
         } catch (Exception e) {
             log.error("메시지 처리 실패: {}", e.getMessage(), e);
-            sendMessage(session, "Error: 메시지 처리 중 오류가 발생했습니다.");
+            sendError(session, "Error: 메시지 처리 중 오류가 발생했습니다.");
         }
     }
 
@@ -99,6 +100,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         // 메시지 저장 및 보낸 사람을 자동으로 readers에 추가
         String messageId = chatMessageService.saveMessage(roomId, sender, message);
+
+        // 메시지 읽음 처리 (sender를 읽은 사용자로 추가)
+        readReceiptService.markAsRead(messageId, sender);
 
         // 읽음 상태를 즉시 브로드캐스트
         List<String> readers = readReceiptService.getReadBy(messageId);
@@ -121,25 +125,42 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String messageId = readReceiptDTO.getMessage();
         String sender = readReceiptDTO.getSender(); // 읽음을 보고한 사용자
 
-        // 필드 유효성 검사
-        if (roomId == null || messageId == null || sender == null) {
-            log.error("Invalid READ_RECEIPT data: {}", readReceiptDTO);
-            return;
-        }
-
         // 메시지 읽음 처리 (sender를 읽은 사용자로 추가)
         readReceiptService.markAsRead(messageId, sender);
 
-        // 읽음 상태 브로드캐스트 (readBy는 서버에서 조회)
-        List<String> readers = readReceiptService.getReadBy(messageId); // DB에서 읽은 사람 목록 조회
+        // 읽지 않은 메시지 개수 재계산
+        int unreadCount = readReceiptService.countUnreadMessages(roomId, sender);
 
+        // 브로드캐스트할 데이터 생성
         Map<String, Object> readReceiptResponse = Map.of(
+                "chatType", "UNREAD_COUNT",
                 "roomId", roomId,
-                "messageId", messageId,
-                "readBy", readers // 서버가 관리하는 읽은 사람 목록
+                "unreadCount", unreadCount
         );
 
         broadcast(roomId, createTextMessage(readReceiptResponse));
+    }
+
+    /**
+     * 사용자의 채팅방 읽지 않은 채팅 개수 처리
+     */
+    private void handleUnreadCountRequest(ChatMessageDTO chatMessageDTO, WebSocketSession session) {
+        String roomId = chatMessageDTO.getRoomId();
+        String userId = chatMessageDTO.getSender();
+
+        int unreadCount = readReceiptService.countUnreadMessages(roomId, userId);
+
+        Map<String, Object> response = Map.of(
+                "chatType", "UNREAD_COUNT",
+                "roomId", roomId,
+                "unreadCount", unreadCount
+        );
+
+        try {
+            session.sendMessage(createTextMessage(response));
+        } catch (IOException e) {
+            log.error("Failed to send unread count: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -226,7 +247,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     /**
      * 오류 메시지 전송.
      */
-    private void sendMessage(WebSocketSession session, String errorMessage) {
+    private void sendError(WebSocketSession session, String errorMessage) {
         try {
             session.sendMessage(new TextMessage(errorMessage));
         } catch (IOException e) {
