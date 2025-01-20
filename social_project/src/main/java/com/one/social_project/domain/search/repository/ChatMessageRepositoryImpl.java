@@ -25,11 +25,17 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
 
     //날짜, 내용에 따른 동적 쿼리
     @Override
-    public List<ChatMessage> searchByMessageAndDateRange(ChatSearchCondition chatSearchCondition) {
+    public List<ChatMessage> searchByMessageAndDateRange(String roomId, ChatSearchCondition chatSearchCondition) {
 
 
         // MongoTemplate을 사용하여 정규식 쿼리 작성
         Query query = new Query();
+
+        // roomId 조건 추가
+        if (roomId != null && !roomId.isEmpty()) {
+            query.addCriteria(Criteria.where("roomId").is(roomId));
+        }
+
         if (chatSearchCondition.getMessage() != null && !chatSearchCondition.getMessage().isEmpty()) {
             query.addCriteria(Criteria.where("message")
                     .regex(".*" + chatSearchCondition.getMessage() + ".*", "i")); // 'i'는 대소문자 구분 없음

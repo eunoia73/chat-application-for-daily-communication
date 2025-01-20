@@ -13,8 +13,8 @@ import java.util.List;
 public class ChatSearchService {
     private final ChatMessageRepository chatMessageRepository;
 
-    public List<ChatMessage> searchByMessageAndDateRange(ChatSearchCondition condition) {
-        return chatMessageRepository.searchByMessageAndDateRange(condition);
+    public List<ChatMessage> searchByMessageAndDateRange(String roomId, ChatSearchCondition condition) {
+        return chatMessageRepository.searchByMessageAndDateRange(roomId, condition);
     }
 
 

@@ -7,6 +7,6 @@ import com.one.social_project.domain.search.ChatSearchCondition;
 import java.util.List;
 
 public interface ChatMessageRepositoryCustom {
-    List<ChatMessage> searchByMessageAndDateRange(ChatSearchCondition chatSearchCondition);
+    List<ChatMessage> searchByMessageAndDateRange(String roomId, ChatSearchCondition chatSearchCondition);
 
 }
