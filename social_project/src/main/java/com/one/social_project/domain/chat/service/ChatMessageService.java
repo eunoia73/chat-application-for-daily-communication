@@ -1,9 +1,8 @@
 package com.one.social_project.domain.chat.service;
 
-import com.one.social_project.domain.chat.dto.ReadReceiptDTO;
+
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.repository.mongo.ChatMessageRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
