@@ -66,6 +66,27 @@ public class ChatRoomService {
                 .collect(Collectors.toList());
     }
 
+    // 사용자별 채팅방 조회
+    public List<ChatRoomDTO> getUserChatRooms(String userId){
+        // 사용자가 참여 중인 채팅방 ID 목록 조회
+        List<String> roomId = chatParticipantsRepository.findByUserId(userId)
+                .stream()
+                .map(participants -> participants.getChatRoom().getRoomId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 채팅방 ID로 채팅방 정보 조회 및 DTO 반환
+        return roomId.stream()
+                .map(chatRoomRepository::findByRoomId)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(chatRoom -> {
+                    int unreadCount = countUnreadMessages(chatRoom.getRoomId(), userId);
+                    return convertToDTOWithUnreadCount(chatRoom, unreadCount);
+                })
+                .collect(Collectors.toList());
+    }
+
     // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
     public String leaveChatRoom(String roomId, String userId) {
         // 채팅방 확인
@@ -181,6 +202,13 @@ public class ChatRoomService {
         return (user1.compareTo(user2) < 0) ? user1 + ":" + user2 : user2 + ":" + user1;
     }
 
+    // 특정 채팅방의 사용자가 읽지 않은 메시지 개수 계산
+    private int countUnreadMessages(String roomId, String userId) {
+        return (int) chatMessageRepository.findAllByRoomId(roomId).stream()
+                .filter(message -> !message.getReaders().contains(userId))
+                .count();
+    }
+
     // ChatRoom Entity -> DTO
     private ChatRoomDTO convertToDTO(ChatRoom chatRoom) {
         // 참여자 정보를 추출 및 DTO 변환
@@ -217,6 +245,37 @@ public class ChatRoomService {
                 .roomId(roomId)
                 .userId(participants.getUserId())
                 .role(participants.getChatRole())
+                .build();
+    }
+
+    // ChatRoom Entity -> DTO 변환 (읽지 않은 메시지 포함)
+    private ChatRoomDTO convertToDTOWithUnreadCount(ChatRoom chatRoom, int unreadCount) {
+        // 참여자 정보 추출
+        List<String> participantUserIds = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
+                .stream()
+                .map(ChatParticipants::getUserId)
+                .collect(Collectors.toList());
+
+        // 방장 정보 추출
+        String ownerId = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
+                .stream()
+                .filter(participant -> participant.getChatRole() == ChatRole.OWNER)
+                .map(ChatParticipants::getUserId)
+                .findFirst()
+                .orElse("Unknown");
+
+        // 최근 메시지 조회
+        ChatMessage lastMessage = chatMessageRepository.findFirstByRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
+
+        return ChatRoomDTO.builder()
+                .roomId(chatRoom.getRoomId())
+                .roomName(chatRoom.getRoomName())
+                .ownerId(ownerId)
+                .roomType(chatRoom.getRoomType())
+                .createdAt(chatRoom.getCreatedAt())
+                .participants(participantUserIds)
+                .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
+                .unreadCount(unreadCount) // 읽지 않은 메시지 개수 추가
                 .build();
     }
 }
