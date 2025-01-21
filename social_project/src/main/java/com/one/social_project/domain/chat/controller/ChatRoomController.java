@@ -39,17 +39,15 @@ public class ChatRoomController {
             if (chatRoomDTO.getRoomType() == ChatRoomType.DM) {
                 // 개인 채팅방 생성 : 참여자 2명만 허용
                 if (chatRoomDTO.getParticipants() == null || chatRoomDTO.getParticipants().size() != 2) {
-                    // 만약에 getParticipants유저의 email 값이 UserRepository에 없다면 예외 발생
-                    // 있다면 ChatParticipantes의 User 필드에 저장
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "개인 채팅 참여자는 2명이어야 합니다.");
                 }
-                createdRoom = chatRoomService.createChatRoom(chatRoomDTO.getParticipants());
+                createdRoom = chatRoomService.createChatRoom(chatRoomDTO.getRoomName(), chatRoomDTO.getParticipants());
             } else if (chatRoomDTO.getRoomType() == ChatRoomType.GM) {
                 // 그룹 채팅방 생성 : 참여자 3명 이상 필요
                 if (chatRoomDTO.getParticipants() == null || chatRoomDTO.getParticipants().size() < 3) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "그룹 채팅 참여자는 최소 3명 이상이어야 합니다.");
                 }
-                createdRoom = chatRoomService.createChatRoom(chatRoomDTO.getParticipants());
+                createdRoom = chatRoomService.createChatRoom(chatRoomDTO.getRoomName(), chatRoomDTO.getParticipants());
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "올바르지 않은 방 유형 입니다: " + chatRoomDTO.getRoomType());
             }

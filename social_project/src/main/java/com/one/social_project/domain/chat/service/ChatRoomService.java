@@ -10,6 +10,8 @@ import com.one.social_project.domain.chat.entity.ChatRoom;
 import com.one.social_project.domain.chat.repository.mongo.ChatMessageRepository;
 import com.one.social_project.domain.chat.repository.ChatParticipantsRepository;
 import com.one.social_project.domain.chat.repository.ChatRoomRepository;
+import com.one.social_project.domain.user.entity.User;
+import com.one.social_project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,19 +26,27 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class ChatRoomService {
+    private final UserRepository userRepository;
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatParticipantsRepository chatParticipantsRepository;
 
     // 채팅방 생성 (개인 채팅방 또는 그룹 채팅방)
-    public ChatRoomDTO createChatRoom(List<String> participants) {
-        if (participants.size() == 2) {
+    public ChatRoomDTO createChatRoom(String roomName, List<String> participants) {
+
+        List<User> users = participants.stream()
+                .map(nickname ->{
+                    User user = userRepository.findByNickname(nickname)
+                            .orElseThrow(() -> new IllegalArgumentException("User not found for email: " + nickname));
+                    return user;
+                }).collect(Collectors.toList());
+        if (users.size() == 2) {
             // 개인 채팅방 생성
-            return createDirectChatRoom(participants.get(0), participants.get(1));
-        } else if (participants.size() > 2) {
+            return createDirectChatRoom(users.get(0), users.get(1), roomName);
+        } else if (users.size() > 2) {
             // 그룹 채팅방 생성
-            return createGroupChatRoom(participants);
+            return createGroupChatRoom(roomName, users);
         } else {
             throw new IllegalArgumentException("참여자가 2명 이상이어야 합니다.");
         }
@@ -67,9 +77,9 @@ public class ChatRoomService {
     }
 
     // 사용자별 채팅방 조회
-    public List<ChatRoomDTO> getUserChatRooms(String userId){
+    public List<ChatRoomDTO> getUserChatRooms(String email){
         // 사용자가 참여 중인 채팅방 ID 목록 조회
-        List<String> roomId = chatParticipantsRepository.findByUserId(userId)
+        List<String> roomId = chatParticipantsRepository.findByUserNickname(email)
                 .stream()
                 .map(participants -> participants.getChatRoom().getRoomId())
                 .distinct()
@@ -81,21 +91,21 @@ public class ChatRoomService {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(chatRoom -> {
-                    int unreadCount = countUnreadMessages(chatRoom.getRoomId(), userId);
+                    int unreadCount = countUnreadMessages(chatRoom.getRoomId(), email);
                     return convertToDTOWithUnreadCount(chatRoom, unreadCount);
                 })
                 .collect(Collectors.toList());
     }
 
     // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
-    public String leaveChatRoom(String roomId, String userId) {
+    public String leaveChatRoom(String roomId, String email) {
         // 채팅방 확인
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
 
         // 참여자 확인
-        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserId(roomId, userId)
-                        .orElseThrow(() -> new RuntimeException("참여자가 채팅방에 존재하지 않습니다."));
+        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserNickname(roomId, email)
+                .orElseThrow(() -> new RuntimeException("참여자가 채팅방에 존재하지 않습니다."));
 
         if (participant.getChatRole() == ChatRole.OWNER) {
             chatParticipantsRepository.findByChatRoomRoomId(roomId).stream()
@@ -123,8 +133,8 @@ public class ChatRoomService {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // 개인 채팅방 생성
-    private ChatRoomDTO createDirectChatRoom(String user1, String user2) {
-        String roomId = generatePersonalRoomId(user1, user2);
+    private ChatRoomDTO createDirectChatRoom(User user1, User user2, String roomName) {
+        String roomId = generatePersonalRoomId(user1.getNickname(), user2.getNickname());
 
         // 기존 채팅방 확인
         Optional<ChatRoom> existingRoom = chatRoomRepository.findByRoomId(roomId);
@@ -135,7 +145,7 @@ public class ChatRoomService {
         // 새 채팅방 생성
         ChatRoom chatRoom = ChatRoom.builder()
                 .roomId(roomId)
-                .roomName(user1 + " & " + user2)
+                .roomName(roomName)
                 .roomType(ChatRoomType.DM)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -146,14 +156,14 @@ public class ChatRoomService {
         chatParticipantsRepository.save(
                 ChatParticipants.builder()
                         .chatRoom(chatRoom)
-                        .userId(user1)
+                        .user(user1)
                         .chatRole(ChatRole.OWNER) // 방장
                         .build());
 
         chatParticipantsRepository.save(
                 ChatParticipants.builder()
                         .chatRoom(chatRoom)
-                        .userId(user2)
+                        .user(user2)
                         .chatRole(ChatRole.MEMBER) // 일반 멤버
                         .build());
 
@@ -161,17 +171,12 @@ public class ChatRoomService {
     }
 
     // 그룹 채팅방 생성
-    private ChatRoomDTO createGroupChatRoom(List<String> participants) {
-        if(participants.isEmpty()){
+    private ChatRoomDTO createGroupChatRoom(String roomName, List<User> users) {
+        if(users.isEmpty()){
             throw new IllegalArgumentException("참여자는 최소 1명 이상이어야 합니다.");
         }
 
         String roomId = UUID.randomUUID().toString();
-
-        // 사용자 이름을 정렬 후 이름 조합 생성
-        String roomName = participants.stream()
-                .sorted()
-                .collect(Collectors.joining(", "));
 
         // 새 그룹 채팅방 생성
         ChatRoom chatRoom = ChatRoom.builder()
@@ -184,12 +189,15 @@ public class ChatRoomService {
         chatRoomRepository.save(chatRoom);
 
         // 참여자 추가
-        for(int i = 0 ; i < participants.size(); i++){
+        for(int i = 0 ; i < users.size(); i++){
+            User user = users.get(i);
+
             ChatRole chatRole = (i == 0) ? ChatRole.OWNER : ChatRole.MEMBER;
+
             chatParticipantsRepository.save(
                     ChatParticipants.builder()
                             .chatRoom(chatRoom)
-                            .userId(participants.get(i))
+                            .user(user)
                             .chatRole(chatRole)
                             .build());
         }
@@ -212,16 +220,16 @@ public class ChatRoomService {
     // ChatRoom Entity -> DTO
     private ChatRoomDTO convertToDTO(ChatRoom chatRoom) {
         // 참여자 정보를 추출 및 DTO 변환
-        List<String> participantUserIds = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
+        List<String> participantEmails = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
-                .map(ChatParticipants::getUserId)
+                .map(chatParticipants -> chatParticipants.getUser().getNickname())
                 .collect(Collectors.toList());
 
         // 방장 정보 추출 (OWNER 역할을 가진 참여자)
         String ownerId = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
                 .filter(participant -> participant.getChatRole() == ChatRole.OWNER)
-                .map(ChatParticipants::getUserId)
+                .map(chatParticipants -> chatParticipants.getUser().getNickname())
                 .findFirst()
                 .orElse("Unknown");  // OWNER가 없으면 "Unknown"을 기본값으로 설정
 
@@ -234,7 +242,7 @@ public class ChatRoomService {
                 .ownerId(ownerId)
                 .roomType(chatRoom.getRoomType())
                 .createdAt(chatRoom.getCreatedAt())
-                .participants(participantUserIds)
+                .participants(participantEmails)
                 .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
                 .build();
     }
@@ -243,7 +251,7 @@ public class ChatRoomService {
     private ChatParticipantsDTO convertToParticipantsDTO(ChatParticipants participants, String roomId){
         return ChatParticipantsDTO.builder()
                 .roomId(roomId)
-                .userId(participants.getUserId())
+                .user(participants.getUser().getNickname())
                 .role(participants.getChatRole())
                 .build();
     }
@@ -253,14 +261,14 @@ public class ChatRoomService {
         // 참여자 정보 추출
         List<String> participantUserIds = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
-                .map(ChatParticipants::getUserId)
+                .map(chatParticipants -> chatParticipants.getUser().getNickname())
                 .collect(Collectors.toList());
 
         // 방장 정보 추출
         String ownerId = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
                 .filter(participant -> participant.getChatRole() == ChatRole.OWNER)
-                .map(ChatParticipants::getUserId)
+                .map(chatParticipants -> chatParticipants.getUser().getNickname())
                 .findFirst()
                 .orElse("Unknown");
 

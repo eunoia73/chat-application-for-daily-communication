@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChatParticipantsDTO {
     private String roomId; // 채팅방 아이디
-    private String userId; // 유저 아이디
+    private String user; // 유저 아이디
     private ChatRole role;
 }

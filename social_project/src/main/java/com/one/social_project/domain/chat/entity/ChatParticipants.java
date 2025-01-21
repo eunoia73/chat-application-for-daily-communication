@@ -2,6 +2,8 @@ package com.one.social_project.domain.chat.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.one.social_project.domain.chat.constant.ChatRole;
+
+import com.one.social_project.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,8 +24,9 @@ public class ChatParticipants {
     @JsonBackReference // 자식 역할의 필드에 붙입니다.
     private ChatRoom chatRoom;
 
-    @Column(nullable = false)
-    private String userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
