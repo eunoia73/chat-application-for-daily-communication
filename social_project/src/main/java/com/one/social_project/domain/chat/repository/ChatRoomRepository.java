@@ -9,4 +9,5 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     // 채팅방 조회
     Optional<ChatRoom> findByRoomId(String roomId);
+
 }
