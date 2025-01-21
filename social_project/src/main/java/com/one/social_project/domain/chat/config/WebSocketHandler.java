@@ -28,9 +28,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
 
-    // 채팅방 별로 WebSocket 세션을 관리하기 위한 Map
-    private final Map<String, List<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
-    private final ChatMessageService chatMessageService; // 채팅 메시지 저장 및 관리 서비스
+
+    private final Map<String, List<WebSocketSession>> roomSessions = new ConcurrentHashMap<>(); // 채팅방 별로 WebSocket 세션을 관리하기 위한 Map
+    private final ChatMessageService chatMessageService;
     private final ReadReceiptService readReceiptService;
     private final ObjectMapper objectMapper; // JSON 파싱 도구
 
@@ -41,9 +41,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         try {
-            String roomId = extractRoomId(session); // 세션에서 채팅방 ID 추출
+            String roomId = extractRoomId(session);
 
-            // 해당 채팅방 세션 리스트 생성(없으면 새로 생성)
             roomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>()).add(session);
             log.info("WebSocket 연결 성공: roomId={}", roomId);
 
@@ -67,14 +66,14 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
             switch (chatMessageDTO.getChatType()) {
                 case "CHAT":
-                    handleChatMessage(chatMessageDTO); // 채팅 메시지 처리
+                    handleChatMessage(chatMessageDTO);
                     break;
                 case "UNREAD_COUNT":
                     handleUnreadCountRequest(chatMessageDTO, session);
                     break;
                 case "READ_RECEIPT":
                     ReadReceiptDTO readReceiptDTO = objectMapper.readValue(payload, ReadReceiptDTO.class);
-                    handleReadReceipt(readReceiptDTO); // 읽음 상태 처리
+                    handleReadReceipt(readReceiptDTO);
                     break;
                 default:
                     sendError(session, "Error: 알 수 없는 chatType입니다.");
@@ -98,23 +97,20 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        // 메시지 저장 및 보낸 사람을 자동으로 readers에 추가
         String messageId = chatMessageService.saveMessage(roomId, sender, message);
 
-        // 메시지 읽음 처리 (sender를 읽은 사용자로 추가)
         readReceiptService.markAsRead(messageId, sender);
 
-        // 읽음 상태를 즉시 브로드캐스트
         List<String> readers = readReceiptService.getReadBy(messageId);
 
         Map<String, Object> readReceiptResponse = Map.of(
                 "roomId", roomId,
                 "message", messageId,
-                "readBy", readers // 서버에서 관리하는 읽은 사람 목록
+                "readBy", readers
         );
 
-        broadcast(roomId, createTextMessage(readReceiptResponse)); // 읽음 상태 브로드캐스트
-        broadcast(roomId, createTextMessage(chatMessageDTO)); // 채팅 메시지 브로드캐스트
+        broadcast(roomId, createTextMessage(readReceiptResponse));
+        broadcast(roomId, createTextMessage(chatMessageDTO));
     }
 
     /**
@@ -123,15 +119,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private void handleReadReceipt(ReadReceiptDTO readReceiptDTO) {
         String roomId = readReceiptDTO.getRoomId();
         String messageId = readReceiptDTO.getMessage();
-        String sender = readReceiptDTO.getSender(); // 읽음을 보고한 사용자
+        String sender = readReceiptDTO.getSender();
 
-        // 메시지 읽음 처리 (sender를 읽은 사용자로 추가)
         readReceiptService.markAsRead(messageId, sender);
 
-        // 읽지 않은 메시지 개수 재계산
         int unreadCount = readReceiptService.countUnreadMessages(roomId, sender);
 
-        // 브로드캐스트할 데이터 생성
         Map<String, Object> readReceiptResponse = Map.of(
                 "chatType", "UNREAD_COUNT",
                 "roomId", roomId,
@@ -210,15 +203,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return URLDecoder.decode(segments[segments.length - 1], StandardCharsets.UTF_8.name());
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to extract roomId", e);
-        }
-    }
-
-    /**
-     * 메시지 유효성 검사.
-     */
-    private void validateMessage(ChatMessageDTO chatMessageDTO) {
-        if (chatMessageDTO.getChatType() == null || chatMessageDTO.getRoomId() == null) {
-            throw new IllegalArgumentException("Error: chatType 또는 roomId가 누락되었습니다.");
         }
     }
 
