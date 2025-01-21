@@ -15,4 +15,7 @@ public interface ChatParticipantsRepository extends JpaRepository<ChatParticipan
 
     // 특정 채팅방과 특정 사용자(userId)에 해당하는 참여자를 조회하는 메서드
     Optional<ChatParticipants> findByChatRoomRoomIdAndUserId(String roomId, String userId);
+
+    // 사용자가 참여 중인 오픈 채팅방 참여 정보 조회
+    List<ChatParticipants> findByUserId(String userId);
 }

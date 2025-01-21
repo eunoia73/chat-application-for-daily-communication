@@ -9,14 +9,17 @@ import java.util.List;
 
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
     // 특정 채팅방의 모든 메시지를 조회
-    List<ChatMessage> findByRoomId(String roomId);
+    List<ChatMessage> findAllByRoomId(String roomId);
 
     // 특정 채팅방에 채팅 조회 (생성 시간 기준 오름차순 정렬)
-    Page<ChatMessage> findByRoomIdOrderByCreatedAtAsc(String roomId, Pageable pageable);
+    Page<ChatMessage> findAllByRoomIdOrderByCreatedAtAsc(String roomId, Pageable pageable);
 
     // 특정 채팅방의 가장 최근 메시지 조회
     ChatMessage findFirstByRoomIdOrderByCreatedAtDesc(String roomId);
 
     // 특정 채팅방의 모든 메시지 삭제
     void deleteAllByRoomId(String roomId);
+
+    // 채팅방의 읽지 않은 메시지 조회(sender가 읽지 않은 메시지)
+    List<ChatMessage> findAllByRoomIdAndReadersNotContaining(String roomId, String sender);
 }

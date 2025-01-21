@@ -20,26 +20,35 @@ public class ChatMessageService {
 
     // 채팅 저장
     public String saveMessage(String roomId, String sender, String message) {
-        ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setRoomId(roomId);
-        chatMessage.setMessage(message);
-        chatMessage.setSender(sender);
+        ChatMessage chatMessage = ChatMessage.builder()
+                .roomId(roomId)
+                .sender(sender)
+                .message(message)
+                .readers(new ArrayList<>(List.of(sender)))
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        // 보낸 사용자를 읽은 사람 목록에 자동 추가
-        List<String> readers = new ArrayList<>();
-        readers.add(sender);
-        chatMessage.setReaders(readers);
-        chatMessage.setCreatedAt(LocalDateTime.now());
-
-        // 메시지 저장
-        chatMessageRepository.save(chatMessage);
-
-        // 저장된 메시지의 ID 반환
-        return chatMessage.getId();
+        ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
+        return savedMessage.getId();
     }
 
     // 채팅방별 채팅 기록 조회
-    public Page<ChatMessage> getMessagesByRoomId(String roomId, Pageable pageable) {
-        return chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId, pageable);
+    public Page<ChatMessage> getMessages(String roomId, Pageable pageable) {
+        return chatMessageRepository.findAllByRoomIdOrderByCreatedAtAsc(roomId, pageable);
     }
+
+    public List<ChatMessage> getUnreadMessages(String roomId, String sender){
+        return chatMessageRepository.findAllByRoomIdAndReadersNotContaining(roomId, sender);
+    }
+
+    public void markMessageAsRead(String messageId, String userId){
+        ChatMessage chatMessage = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("메시지를 찾을 수 없습니다."));
+
+        if(!chatMessage.getReaders().contains(userId)){
+            chatMessage.getReaders().add(userId);
+            chatMessageRepository.save(chatMessage);
+        }
+    }
+
 }

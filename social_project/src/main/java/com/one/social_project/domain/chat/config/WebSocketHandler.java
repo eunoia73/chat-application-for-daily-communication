@@ -2,7 +2,7 @@ package com.one.social_project.domain.chat.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.one.social_project.domain.chat.dto.ChatMessageDTO;
-import com.one.social_project.domain.chat.dto.ReadReceiptDTO;
+import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ReadReceiptService;
 import lombok.RequiredArgsConstructor;
@@ -22,70 +22,103 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-//Spring WebSocket을 사용하여 채팅 기능을 제공하기 위한 WebSocket 핸들러 클래스입니다.
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
 
-
     private final Map<String, List<WebSocketSession>> roomSessions = new ConcurrentHashMap<>(); // 채팅방 별로 WebSocket 세션을 관리하기 위한 Map
     private final ChatMessageService chatMessageService;
     private final ReadReceiptService readReceiptService;
-    private final ObjectMapper objectMapper; // JSON 파싱 도구
+    private final ObjectMapper objectMapper;
 
     /**
-     * WebSocket 연결이 성공적으로 생성되었을 때 호출됩니다.
-     * 해당 세션을 채팅방(roomId)에 추가합니다.
+     * WebSocket 연결 시 호출
      */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         try {
             String roomId = extractRoomId(session);
-
             roomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>()).add(session);
             log.info("WebSocket 연결 성공: roomId={}", roomId);
-
         } catch (Exception e) {
             log.error("WebSocket 연결 실패: {}", e.getMessage(), e);
-            closeSession(session, CloseStatus.SERVER_ERROR); // 세션 종료 확인
+            closeSession(session, CloseStatus.SERVER_ERROR);
         }
     }
 
     /**
-     * 클라이언트가 메시지를 보낼 때 호출됩니다.
-     * 메시지를 JSON으로 파싱하고 해당 채팅방의 모든 세션에 메시지를 브로드캐스트합니다.
+     * 클라이언트 메시지 처리
      */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
-            String payload = message.getPayload(); // 클라이언트에서 전송된 메시지 내용
-
-            // JSON 문자열을 ChatMessageDTO 객체로 변환
+            String payload = message.getPayload();
             ChatMessageDTO chatMessageDTO = objectMapper.readValue(payload, ChatMessageDTO.class);
 
             switch (chatMessageDTO.getChatType()) {
+                case "ENTER":
+                    handleEnterMessage(session, chatMessageDTO);
+                    break;
                 case "CHAT":
                     handleChatMessage(chatMessageDTO);
                     break;
                 case "UNREAD_COUNT":
                     handleUnreadCountRequest(chatMessageDTO, session);
                     break;
-                case "READ_RECEIPT":
-                    ReadReceiptDTO readReceiptDTO = objectMapper.readValue(payload, ReadReceiptDTO.class);
-                    handleReadReceipt(readReceiptDTO);
-                    break;
                 default:
-                    sendError(session, "Error: 알 수 없는 chatType입니다.");
+                    sendError(session, "알 수 없는 chatType입니다.");
             }
         } catch (Exception e) {
-            log.error("메시지 처리 실패: {}", e.getMessage(), e);
-            sendError(session, "Error: 메시지 처리 중 오류가 발생했습니다.");
+            log.error("메시지 처리 중 오류 발생: {}", e.getMessage(), e);
+            sendError(session, "메시지 처리 중 오류가 발생했습니다.");
         }
     }
 
     /**
-     * 채팅 메시지 처리.
+     * 사용자가 채팅방에 입장 시 처리
+     */
+    private void handleEnterMessage(WebSocketSession session, ChatMessageDTO chatMessageDTO) {
+        String roomId = chatMessageDTO.getRoomId();
+        String sender = chatMessageDTO.getSender();
+
+        roomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>()).add(session);
+        log.info("ENTER 메시지 처리 완료: roomId={}, sender={}", roomId, sender);
+
+        // 읽지 않은 메시지 처리
+        handleReadAllUnreadMessages(roomId, sender);
+    }
+
+    /**
+     * 읽지 않은 메시지를 모두 읽음 처리
+     */
+    private void handleReadAllUnreadMessages(String roomId, String sender) {
+        List<ChatMessage> unreadMessages = chatMessageService.getUnreadMessages(roomId, sender);
+
+        if (!unreadMessages.isEmpty()) {
+            unreadMessages.forEach(chatMessage -> {
+                chatMessageService.markMessageAsRead(chatMessage.getId(), sender);
+                readReceiptService.markAsRead(chatMessage.getId(), sender);
+            });
+
+            int unreadCount = readReceiptService.countUnreadMessages(roomId, sender);
+
+            Map<String, Object> response = Map.of(
+                    "chatType", "UNREAD_COUNT",
+                    "roomId", roomId,
+                    "unreadCount", unreadCount
+            );
+
+            broadcast(roomId, createTextMessage(response));
+            log.info("읽지 않은 메시지 처리 완료: roomId={}, sender={}, 처리된 메시지 수={}",
+                    roomId, sender, unreadMessages.size());
+        } else {
+            log.info("읽지 않은 메시지가 없습니다: roomId={}, sender={}", roomId, sender);
+        }
+    }
+
+    /**
+     * 채팅 메시지 처리
      */
     private void handleChatMessage(ChatMessageDTO chatMessageDTO) {
         String roomId = chatMessageDTO.getRoomId();
@@ -114,28 +147,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * 읽음 상태 처리.
-     */
-    private void handleReadReceipt(ReadReceiptDTO readReceiptDTO) {
-        String roomId = readReceiptDTO.getRoomId();
-        String messageId = readReceiptDTO.getMessage();
-        String sender = readReceiptDTO.getSender();
-
-        readReceiptService.markAsRead(messageId, sender);
-
-        int unreadCount = readReceiptService.countUnreadMessages(roomId, sender);
-
-        Map<String, Object> readReceiptResponse = Map.of(
-                "chatType", "UNREAD_COUNT",
-                "roomId", roomId,
-                "unreadCount", unreadCount
-        );
-
-        broadcast(roomId, createTextMessage(readReceiptResponse));
-    }
-
-    /**
-     * 사용자의 채팅방 읽지 않은 채팅 개수 처리
+     * 사용자의 채팅방 읽지 않은 메시지 수 요청 처리
      */
     private void handleUnreadCountRequest(ChatMessageDTO chatMessageDTO, WebSocketSession session) {
         String roomId = chatMessageDTO.getRoomId();
@@ -152,12 +164,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
         try {
             session.sendMessage(createTextMessage(response));
         } catch (IOException e) {
-            log.error("Failed to send unread count: {}", e.getMessage(), e);
+            log.error("Unread count 전송 실패: {}", e.getMessage(), e);
         }
     }
 
     /**
-     * 특정 채팅방의 모든 WebSocket 세션에 메시지를 브로드캐스트.
+     * 메시지를 모든 WebSocket 세션에 브로드캐스트
      */
     private void broadcast(String roomId, TextMessage message) {
         roomSessions.getOrDefault(roomId, List.of()).forEach(session -> {
@@ -172,7 +184,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * WebSocket 연결이 종료되었을 때 호출됩니다.
+     * WebSocket 연결 종료 처리
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
@@ -191,7 +203,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * WebSocket 세션의 URI에서 채팅방 ID를 추출합니다.
+     * WebSocket URI에서 채팅방 ID 추출
      */
     private String extractRoomId(WebSocketSession session) {
         try {
@@ -207,7 +219,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * TextMessage 객체를 생성.
+     * JSON 데이터를 TextMessage로 변환
      */
     private TextMessage createTextMessage(Object data) {
         try {
@@ -218,7 +230,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * WebSocket 세션 종료 처리.
+     * WebSocket 세션 종료 처리
      */
     private void closeSession(WebSocketSession session, CloseStatus status) {
         try {
@@ -229,7 +241,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     /**
-     * 오류 메시지 전송.
+     * 오류 메시지 전송
      */
     private void sendError(WebSocketSession session, String errorMessage) {
         try {
