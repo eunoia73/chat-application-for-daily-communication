@@ -7,7 +7,6 @@ import com.one.social_project.domain.user.dto.register.RegisterReqDto;
 import com.one.social_project.domain.user.dto.register.RegisterResDto;
 import com.one.social_project.domain.user.service.CustomOAuth2UserService;
 import com.one.social_project.domain.user.service.UserService;
-import com.one.social_project.domain.user.util.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class AuthController {
-
-
 
     private final UserService userService;
     private final CustomOAuth2UserService customOAuth2UserService;

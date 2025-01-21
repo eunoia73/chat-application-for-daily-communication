@@ -23,4 +23,5 @@ public class ChatMessageController {
         ReadReceiptDTO readStatus = readReceiptService.getReadStatus(messageId);
         return ResponseEntity.ok(readStatus);
     }
+
 }

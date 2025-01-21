@@ -1,7 +1,9 @@
 package com.one.social_project.domain.chat.service;
 
+import com.one.social_project.domain.chat.dto.ReadReceiptDTO;
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.repository.mongo.ChatMessageRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,7 @@ public class ChatMessageService {
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
         return savedMessage.getId();
     }
+
 
     // 채팅방별 채팅 기록 조회
     public Page<ChatMessage> getMessages(String roomId, Pageable pageable) {

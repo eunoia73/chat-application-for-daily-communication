@@ -1,6 +1,7 @@
 package com.one.social_project.domain.user.repository;
 
 
+import com.one.social_project.domain.search.repository.UserRepositoryCustom;
 import com.one.social_project.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,7 +10,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, UserRepositoryCustom {
 
     Optional<User> findByEmail(String email);
     List<User> findUsersByEmail(String email);

@@ -12,7 +12,7 @@ import java.util.Date;
 public class TokenProvider {
 
     // JWT 비밀 키 (보안을 위해 환경 변수 또는 Spring Secret Store에 저장하는 것이 좋습니다)
-    @Value("${jwt.secret-key}")
+    @Value("${spring.jwt.secret}")
     private String secretKey;
 
     // 토큰 만료 시간 (예시: 1시간)
