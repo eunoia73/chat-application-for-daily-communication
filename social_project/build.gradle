@@ -24,27 +24,79 @@ repositories {
 }
 
 dependencies {
+// Spring Boot 기본 스타터들
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-	testImplementation 'org.springframework.security:spring-security-test'
-	compileOnly 'org.projectlombok:lombok'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+// Lombok (빌드 시 애노테이션 프로세싱)
+	annotationProcessor 'org.projectlombok:lombok'
+
+// JavaMailSender
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+// 테스트 관련 의존성
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.mockito:mockito-core:4.0.0' // Mockito
+	testImplementation 'org.mockito:mockito-junit-jupiter:4.0.0' // Mockito
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // junit
+
+// 데이터베이스 및 JPA 관련
 	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'com.mysql:mysql-connector-j'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
-    // Java 8 이상에서 추가된 날짜 및 시간 API(JSR-310)를 지원하기 위한 Jackson 모듈
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+// OAuth2
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 
+// JSON 및 날짜 처리 관련
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310' // Java 8+ 날짜/시간 처리용 Jackson 모듈
+
+// JWT(Json Web Token) 관련
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+// AWS S3 연동 관련
+	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.530'
+
+// Tika (파일 형식 탐지 및 콘텐츠 추출)
+	implementation group: 'org.apache.tika', name: 'tika-core', version: '2.7.0'
+
+// OGNL (Object-Graph Navigation Language)
+	implementation 'ognl:ognl:3.2.19'
+
+// Querydsl
+	implementation("com.querydsl:querydsl-mongodb:5.0.0") {
+		exclude group: "org.mongodb", module: "mongo-java-driver"
+	}
+	annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+
+	implementation group: 'com.querydsl', name: 'querydsl-apt', version: '5.1.0'
+	annotationProcessor 'com.querydsl:querydsl-apt'
 
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+tasks.withType(JavaCompile) {
+	options.annotationProcessorPath = configurations.annotationProcessor
 }

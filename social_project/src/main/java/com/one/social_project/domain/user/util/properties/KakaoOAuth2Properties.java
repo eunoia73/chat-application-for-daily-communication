@@ -2,10 +2,12 @@ package com.one.social_project.domain.user.util.properties;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 @Component
 @Getter
+@PropertySource(value = "application-secret.properties")
 public class KakaoOAuth2Properties {
     @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
     private String clientId;

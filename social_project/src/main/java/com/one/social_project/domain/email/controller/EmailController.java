@@ -2,9 +2,11 @@ package com.one.social_project.domain.email.controller;
 
 import com.one.social_project.domain.email.dto.EmailDto;
 import com.one.social_project.domain.email.service.EmailService;
+import com.one.social_project.domain.user.util.CustomUserDetails;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -16,7 +18,7 @@ public class EmailController {
 
     // 인증코드 메일 발송
     @PostMapping("/send")
-    public String mailSend(@RequestBody EmailDto emailDto) throws MessagingException {
+    public String mailSend(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody EmailDto emailDto) throws MessagingException {
         log.info("EmailController.mailSend()");
         emailService.sendEmail(emailDto.getMail());
         return "인증코드가 발송되었습니다.";
