@@ -75,7 +75,7 @@ public class ChatRoomController {
     @GetMapping("/{roomId}/chat-list")
     public ResponseEntity<Page<ChatMessage>> getMessages(@PathVariable("roomId") String roomId , Pageable pageable) {
         System.out.println("Room ID: " + roomId); // 디버깅용 출력
-        Page<ChatMessage> messages = chatMessageService.getMessagesByRoomId(roomId , pageable);
+        Page<ChatMessage> messages = chatMessageService.getMessages(roomId , pageable);
         if (messages.isEmpty()) {
             return ResponseEntity.noContent().build(); // 204 No Content
         }
@@ -87,6 +87,13 @@ public class ChatRoomController {
     public ResponseEntity<List<ChatParticipantsDTO>> getChatRoomParticipants(@PathVariable String roomId){
         List<ChatParticipantsDTO> participants = chatRoomService.getChatRoomParticipants(roomId);
         return ResponseEntity.ok(participants);
+    }
+
+    // 사용자별 채팅방 목록 조회
+    @GetMapping("/rooms/{userId}")
+    public ResponseEntity<List<ChatRoomDTO>> getUserChatRooms(@PathVariable String userId){
+        List<ChatRoomDTO> chatRooms = chatRoomService.getUserChatRooms(userId);
+        return ResponseEntity.ok(chatRooms);
     }
 
     // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
