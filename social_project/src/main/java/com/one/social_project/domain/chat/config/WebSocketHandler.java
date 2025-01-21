@@ -18,10 +18,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -40,7 +42,15 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
         try {
             String roomId = extractRoomId(session);
+            String sender = extractSender(session);
             roomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>()).add(session);
+
+            Map<String, Object> joinMessage = Map.of(
+                    "chatType", "ENTER",
+                    "message", sender + "님이 입장하였습니다."
+            );
+            broadcast(roomId, createTextMessage(joinMessage));
+
             log.info("WebSocket 연결 성공: roomId={}", roomId);
         } catch (Exception e) {
             log.error("WebSocket 연결 실패: {}", e.getMessage(), e);
@@ -216,6 +226,30 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return URLDecoder.decode(segments[segments.length - 1], StandardCharsets.UTF_8.name());
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to extract roomId", e);
+        }
+    }
+
+    private String extractSender(WebSocketSession session) {
+        try {
+            URI uri = session.getUri();
+            if (uri == null) {
+                throw new IllegalArgumentException("Session URI가 존재하지 않습니다.");
+            }
+            String query = uri.getQuery(); // URI의 쿼리 문자열 추출
+            if (query == null) {
+                throw new IllegalArgumentException("쿼리 문자열이 존재하지 않습니다.");
+            }
+            // 쿼리 파라미터 파싱
+            Map<String, String> queryParams = Arrays.stream(query.split("&"))
+                    .map(param -> param.split("=", 2))
+                    .collect(Collectors.toMap(
+                            parts -> URLDecoder.decode(parts[0], StandardCharsets.UTF_8),
+                            parts -> URLDecoder.decode(parts[1], StandardCharsets.UTF_8)
+                    ));
+            return queryParams.getOrDefault("sender", "Unknown"); // username 파라미터 추출
+        } catch (Exception e) {
+            log.error("Sender 정보 추출 실패: {}", e.getMessage());
+            return "Unknown";
         }
     }
 
