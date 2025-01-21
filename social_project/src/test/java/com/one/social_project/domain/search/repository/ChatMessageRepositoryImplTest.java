@@ -2,12 +2,14 @@ package com.one.social_project.domain.search.repository;
 
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.search.ChatSearchCondition;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -15,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+
 @SpringBootTest
 @Transactional
 class ChatMessageRepositoryImplTest {
@@ -24,37 +28,42 @@ class ChatMessageRepositoryImplTest {
 
     private ChatMessageRepositoryImpl chatMessageRepository;
 
+    private static final String TEST_ROOM_ID = "test_room_12345";
+
     @BeforeEach
     void setUp() {
         chatMessageRepository = new ChatMessageRepositoryImpl(mongoOperations);
 
-        // 테스트 데이터 초기화
-        mongoOperations.dropCollection(ChatMessage.class);
-
         ChatMessage message1 = ChatMessage.builder()
                 .message("Hello world")
                 .sender("user1")
-                .roomId("room1")
+                .roomId(TEST_ROOM_ID)
                 .createdAt(LocalDateTime.of(2023, 1, 1, 10, 0))
                 .build();
 
         ChatMessage message2 = ChatMessage.builder()
                 .message("Test message")
                 .sender("user2")
-                .roomId("room1")
+                .roomId(TEST_ROOM_ID)
                 .createdAt(LocalDateTime.of(2023, 1, 2, 15, 30))
                 .build();
 
         ChatMessage message3 = ChatMessage.builder()
                 .message("Hello Spring")
                 .sender("user3")
-                .roomId("room1")
+                .roomId(TEST_ROOM_ID)
                 .createdAt(LocalDateTime.of(2023, 1, 3, 20, 0))
                 .build();
 
         mongoOperations.save(message1);
         mongoOperations.save(message2);
         mongoOperations.save(message3);
+    }
+
+    @AfterEach
+    void tearDown() {
+        // 테스트 데이터 정리
+        mongoOperations.remove(new Query(where("roomId").is(TEST_ROOM_ID)), ChatMessage.class);
     }
 
     @Test
@@ -68,7 +77,7 @@ class ChatMessageRepositoryImplTest {
         condition.setCreatedAtLoe("20230103");
 
         // When
-        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(roomId, condition);
+        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(TEST_ROOM_ID, condition);
 
         // Then
         assertThat(results).isNotEmpty();
@@ -85,7 +94,7 @@ class ChatMessageRepositoryImplTest {
         condition.setMessage("Test");
 
         // When
-        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(roomId, condition);
+        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(TEST_ROOM_ID, condition);
 
         // Then
         assertThat(results).isNotEmpty();
@@ -103,7 +112,7 @@ class ChatMessageRepositoryImplTest {
         condition.setCreatedAtLoe("20230103");
 
         // When
-        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(roomId, condition);
+        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(TEST_ROOM_ID, condition);
 
         // Then
         assertThat(results).isNotEmpty();
@@ -120,7 +129,7 @@ class ChatMessageRepositoryImplTest {
         condition.setCreatedAtGoe("20230102");
 
         // When
-        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(roomId, condition);
+        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(TEST_ROOM_ID, condition);
 
         // Then
         assertThat(results).isNotEmpty();
@@ -138,7 +147,7 @@ class ChatMessageRepositoryImplTest {
         condition.setCreatedAtLoe("20230102");
 
         // When
-        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(roomId, condition);
+        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(TEST_ROOM_ID, condition);
 
         // Then
         assertThat(results).isNotEmpty();
@@ -155,7 +164,7 @@ class ChatMessageRepositoryImplTest {
         condition.setMessage("Non-existing");
 
         // When
-        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(roomId, condition);
+        List<ChatMessage> results = chatMessageRepository.searchByMessageAndDateRange(TEST_ROOM_ID, condition);
 
         // Then
         assertThat(results).isEmpty();
