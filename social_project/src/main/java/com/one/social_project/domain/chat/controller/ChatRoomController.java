@@ -6,12 +6,14 @@ import com.one.social_project.domain.chat.constant.ChatRoomType;
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ChatRoomService;
+import com.one.social_project.domain.user.util.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -28,7 +30,7 @@ public class ChatRoomController {
     private final ChatMessageService chatMessageService;
 
     // 채팅방 생성 (개인 채팅방 또는 그룹 채팅방)
-    @PostMapping("/createroom")
+    @PostMapping("/room")
     public ResponseEntity<ChatRoomDTO> createChatRoom(@RequestBody ChatRoomDTO chatRoomDTO) {
         try {
             ChatRoomDTO createdRoom;
@@ -37,6 +39,8 @@ public class ChatRoomController {
             if (chatRoomDTO.getRoomType() == ChatRoomType.DM) {
                 // 개인 채팅방 생성 : 참여자 2명만 허용
                 if (chatRoomDTO.getParticipants() == null || chatRoomDTO.getParticipants().size() != 2) {
+                    // 만약에 getParticipants유저의 email 값이 UserRepository에 없다면 예외 발생
+                    // 있다면 ChatParticipantes의 User 필드에 저장
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "개인 채팅 참여자는 2명이어야 합니다.");
                 }
                 createdRoom = chatRoomService.createChatRoom(chatRoomDTO.getParticipants());
