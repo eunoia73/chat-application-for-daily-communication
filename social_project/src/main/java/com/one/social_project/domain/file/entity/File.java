@@ -34,7 +34,10 @@ public class File {
     private String fileType;
 
     @Column(nullable = false)
-    private String fileUrl;
+    private String originFileUrl;  //원본 url
+
+    @Column(nullable = true)
+    private String thumbNailUrl;  //썸네일 url
 
     @Column(nullable = false)
     private Long fileSize;

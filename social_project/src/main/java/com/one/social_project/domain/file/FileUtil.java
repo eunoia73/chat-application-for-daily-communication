@@ -14,7 +14,7 @@ import java.util.List;
 @Component
 public class FileUtil {
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "pdf", "txt", "doc", "ppt", "gif", "mp4", "zip", "docx", "pptx", "xlsx", "xls");
-    private static final List<String> ALLOWED_EXTENSIONS_PROFILE = Arrays.asList("jpg", "jpeg", "png", "gif");
+    public static final List<String> ALLOWED_EXTENSIONS_IMAGE = Arrays.asList("jpg", "jpeg", "png", "gif");
 
     public void validateFile(FileDTO fileDTO) throws IOException {
 
@@ -23,7 +23,7 @@ public class FileUtil {
 
         // 파일 확장자 검증
         if (fileDTO.getCategory() == FileCategory.PROFILE) {
-            if (!ALLOWED_EXTENSIONS_PROFILE.contains(fileExtension)) {
+            if (!ALLOWED_EXTENSIONS_IMAGE.contains(fileExtension)) {
                 throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
             }
         } else if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {

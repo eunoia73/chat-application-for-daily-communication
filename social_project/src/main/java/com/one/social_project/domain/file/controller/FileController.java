@@ -5,15 +5,12 @@ import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
 import com.one.social_project.domain.file.entity.FileCategory;
 import com.one.social_project.domain.file.service.FileService;
-import com.one.social_project.domain.user.util.CustomUserDetails;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,24 +20,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.one.social_project.domain.file.FileUtil.ALLOWED_EXTENSIONS_IMAGE;
 
+
+@Slf4j
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
 public class FileController {
 
     private final FileService fileService;
-    @Value("${cloud.aws.region.static}")
-    private String region;
-
-    @Value("${cloud.aws.s3.bucket-name-2}")
-    private String bucketNameResized;
-
-    private String resizedUrl;
-    @PostConstruct
-    public void init() {
-        this.resizedUrl = "https://" + bucketNameResized + ".s3." + region + ".amazonaws.com/";
-    }
 
     /**
      * 파일 업로드
@@ -146,6 +135,7 @@ public class FileController {
 
     /**
      * 파일 조회 - 원본
+     *
      * @param id
      * @return
      */
@@ -176,20 +166,26 @@ public class FileController {
 
     /**
      * 파일조회 - 썸네일
+     *
      * @param id
      * @return
      */
     @GetMapping("/{id}/thumbnail")
     public ResponseEntity<?> getThumbnailFile(@PathVariable("id") Long id) {
         FileDTO fileDTO = fileService.getFile(id);
-        System.out.println(fileDTO.getFileUrl());
-        //파일 썸네일 url로 변경해주기
-        fileDTO.setFileUrl(updateUrl(fileDTO.getFileName()));
-        System.out.println(fileDTO.getFileUrl());
+
         if (fileDTO == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "파일이 존재하지 않습니다."));
         }
+
+        if (fileDTO.getThumbNailUrl() == null && !ALLOWED_EXTENSIONS_IMAGE.contains(fileDTO.getFileType())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "thumbnail이 존재하지 않는 파일입니다."));
+        }
+        log.info("fileDTO.getThumbNailUrl={}",fileDTO.getThumbNailUrl());
+        log.info("fileDTO.getFileType={}",fileDTO.getFileType());
+
         // 파일이 Profile일 경우
         if (fileDTO instanceof ProfileFileDTO) {
             return ResponseEntity.ok(fileDTO);  // ProfileFileDTO 반환
@@ -197,20 +193,15 @@ public class FileController {
 
         // 파일이 Chat일 경우
         if (fileDTO instanceof ChatFileDTO) {
-            // ChatFileDTO에서 chatMessageId가 있는지 확인
+            // ChatFileDTO에서 roomId가 있는지 확인
             if (((ChatFileDTO) fileDTO).getRoomId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "Chat 파일에 필요한 chatMessageId가 없습니다."));
+                        .body(Map.of("error", "Chat 파일에 필요한 roomId가 없습니다."));
             }
             return ResponseEntity.ok(fileDTO);  // ChatFileDTO 반환
         }
 
         return ResponseEntity.ok(fileDTO);
-    }
-
-    //썸네일 관리 버킷 url 전송
-    public String updateUrl(String fileName) {
-        return resizedUrl + "resized-" + fileName;
     }
 
     /**
