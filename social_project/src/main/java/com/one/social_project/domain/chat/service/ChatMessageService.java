@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,18 +21,22 @@ import java.util.List;
 public class ChatMessageService {
     private final ChatMessageRepository chatMessageRepository;
 
+
     // 채팅 저장
     public String saveMessage(String roomId, String sender, String message) {
+        LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+
         ChatMessage chatMessage = ChatMessage.builder()
                 .roomId(roomId)
                 .sender(sender)
                 .message(message)
                 .readers(new ArrayList<>(List.of(sender)))
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
 
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
         return savedMessage.getId();
+
     }
 
 

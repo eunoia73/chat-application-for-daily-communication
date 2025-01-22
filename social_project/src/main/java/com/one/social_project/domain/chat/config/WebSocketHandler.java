@@ -3,6 +3,7 @@ package com.one.social_project.domain.chat.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.one.social_project.domain.chat.dto.ChatMessageDTO;
 import com.one.social_project.domain.chat.entity.ChatMessage;
+import com.one.social_project.domain.chat.repository.ChatRoomRepository;
 import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ReadReceiptService;
 import com.one.social_project.domain.user.util.TokenProvider;
@@ -18,6 +19,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -142,7 +146,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = chatMessageDTO.getRoomId();
         String nickname = extractNickname(session);
 
+        LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+
         chatMessageDTO.setSender(nickname); // 닉네임으로 업데이트
+        chatMessageDTO.setCreatedAt(createdAt);
 
         String messageId = chatMessageService.saveMessage(roomId, nickname, chatMessageDTO.getMessage());
         readReceiptService.markAsRead(messageId, nickname);
