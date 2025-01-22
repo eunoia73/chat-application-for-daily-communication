@@ -100,7 +100,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         // 입장 메시지 브로드캐스트
         Map<String, Object> joinMessage = Map.of(
-                "chatType", "ENTER",
+                "messageType", "ENTER",
                 "message", sender + "님이 입장하였습니다."
         );
         broadcast(roomId, createTextMessage(joinMessage)); // 중복 호출 확인
@@ -122,7 +122,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             int unreadCount = readReceiptService.countUnreadMessages(roomId, sender);
 
             Map<String, Object> response = Map.of(
-                    "chatType", "UNREAD_COUNT",
+                    "messageType", "UNREAD_COUNT",
                     "roomId", roomId,
                     "unreadCount", unreadCount
             );
@@ -170,7 +170,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             int unreadCount = readReceiptService.countUnreadMessages(roomId, nickname);
 
             Map<String, Object> response = Map.of(
-                    "chatType", "UNREAD_COUNT",
+                    "messageType", "UNREAD_COUNT",
                     "roomId", roomId,
                     "nickname", nickname,
                     "unreadCount", unreadCount
