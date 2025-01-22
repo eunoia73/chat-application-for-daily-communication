@@ -1,6 +1,5 @@
 package com.one.social_project.domain.chat.entity;
 
-import jakarta.persistence.Column;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
