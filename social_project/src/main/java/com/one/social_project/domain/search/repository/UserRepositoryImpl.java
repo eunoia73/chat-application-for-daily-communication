@@ -56,7 +56,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         if (nickname == null) {
             return null;
         }
-        return user.nickname.like("%" + nickname + "%");
+        return user.nickname.like(nickname + "%");
     }
 
 }
