@@ -48,7 +48,6 @@ public class ChatMessageService {
                 .orElseThrow(() -> new IllegalArgumentException("메시지를 찾을 수 없습니다."));
 
         if(!chatMessage.getReaders().contains(userId)){
-            chatMessage.getReaders().add(userId);
             chatMessageRepository.save(chatMessage);
         }
     }
