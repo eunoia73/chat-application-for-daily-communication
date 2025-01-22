@@ -3,7 +3,7 @@ package com.one.social_project.domain.file.service;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
-import com.one.social_project.domain.file.FileValidator;
+import com.one.social_project.domain.file.FileUtil;
 import com.one.social_project.domain.file.dto.ChatFileDTO;
 import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
@@ -14,15 +14,11 @@ import com.one.social_project.domain.file.repository.FileRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import com.amazonaws.services.s3.AmazonS3;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -30,14 +26,19 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static com.one.social_project.domain.file.FileUtil.ALLOWED_EXTENSIONS_IMAGE;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FileService {
 
     private final FileRepository fileRepository;
-    private final FileValidator fileValidator;
+    private final FileUtil fileUtil;
     private final AmazonS3 s3Client;
+
+    @Value("${cloud.aws.region.static}")
+    private String region;
 
     @Value("${cloud.aws.s3.bucket-name-1}")
     private String bucketName;
@@ -45,15 +46,15 @@ public class FileService {
     @Value("${cloud.aws.s3.bucket-name-2}")
     private String bucketNameResized;
 
-    @Value("${cloud.aws.region.static}")
-    private String region;
-
     private String defaultUrl;
+    private String resizedUrl;
 
 
     @PostConstruct
     public void init() {
         this.defaultUrl = "https://" + bucketName + ".s3." + region + ".amazonaws.com/";
+        this.resizedUrl = "https://" + bucketNameResized + ".s3." + region + ".amazonaws.com/";
+
     }
 
     /**
@@ -66,50 +67,54 @@ public class FileService {
     public FileDTO uploadFile(FileDTO fileDTO) throws IOException {
 
         //파일 검증
-        fileValidator.validateFile(fileDTO);
+        fileUtil.validateFile(fileDTO);
 
         //1. 파일 이름 변경, url 생성
         String fileName = generateFileName(fileDTO);
-        String fileUrl = defaultUrl + fileName;
+        String originFileUrl = defaultUrl + fileName;
 
         //2. 파일 업로드
-        //InputStream fileInputStream = fileDTO.getFileInputStream();
         fileDTO.setFileInputStream(fileDTO.getFileInputStream());
         PutObjectResult putObjectResult = uploadS3(fileDTO, fileName);
+
+        //aws s3에 resized 파일이 잘 저장되었는지 확인(이미지 관련 파일만 저장됨)
+        String thumbnailFileUrl = null;
+        String fileExtension = getFileExtension(fileDTO.getFileName());
+        if (ALLOWED_EXTENSIONS_IMAGE.contains(fileExtension)) {
+            thumbnailFileUrl = s3Client.getUrl(bucketNameResized, "resized-" + fileName).toString();
+        }
+        log.info("thumbnailFileUrl={}", thumbnailFileUrl);
+
 
         //3. 파일 DTO를 Entity로 변환하여 db에 저장
         File file = File.builder()
                 .fileName(fileName)
                 .fileType(fileDTO.getFileType())
                 .fileSize(fileDTO.getFileSize())
-                .fileUrl(fileUrl)
+                .originFileUrl(originFileUrl)
+                .thumbNailUrl(thumbnailFileUrl)
                 .expiredAt(convertToLocalDateTime(putObjectResult.getExpirationTime()))
                 .category(fileDTO.getCategory())
-                .chatMessageId(fileDTO instanceof ChatFileDTO ? ((ChatFileDTO) fileDTO).getChatMessageId() : null)  // chat일 때만 chatMessageId 설정
+                .nickname(fileDTO.getNickname())
+                .roomId(fileDTO instanceof ChatFileDTO ? ((ChatFileDTO) fileDTO).getRoomId() : null)  // chat일 때만 roomId 설정
                 .build();
         File saved = fileRepository.save(file);
 
-        FileDTO savedDTO = null;
-//
-//        FileDTO savedDTO = FileDTO.builder()
-//                .id(saved.getId())
-//                .fileName(saved.getFileName())
-//                .fileType(saved.getFileType())
-//                .fileSize(saved.getFileSize())
-//                .fileUrl(saved.getFileUrl())
-//                .createdAt(saved.getCreatedAt())
-//                .expiredAt(saved.getExpiredAt())
-//                .build();
 
+        FileDTO savedDTO = null;
+
+        //4. 저장된 Entity를 DTO로 변환
         if (file.getCategory() == FileCategory.PROFILE) {
             savedDTO = ProfileFileDTO.builder()
                     .id(saved.getId())
                     .fileName(saved.getFileName())
                     .fileType(saved.getFileType())
                     .fileSize(saved.getFileSize())
-                    .fileUrl(saved.getFileUrl())
+                    .originFileUrl(saved.getOriginFileUrl())
+                    .thumbNailUrl(thumbnailFileUrl)
                     .createdAt(saved.getCreatedAt())
                     .expiredAt(saved.getExpiredAt())
+                    .nickname(saved.getNickname())
                     .category(FileCategory.PROFILE)
                     .build();
 
@@ -119,16 +124,17 @@ public class FileService {
                     .fileName(saved.getFileName())
                     .fileType(saved.getFileType())
                     .fileSize(saved.getFileSize())
-                    .fileUrl(saved.getFileUrl())
+                    .originFileUrl(saved.getOriginFileUrl())
+                    .thumbNailUrl(thumbnailFileUrl)
                     .createdAt(saved.getCreatedAt())
                     .expiredAt(saved.getExpiredAt())
+                    .nickname(saved.getNickname())
                     .category(FileCategory.CHAT)
-                    .chatMessageId(((ChatFileDTO) fileDTO).getChatMessageId())  // chatMessageId는 ChatFileDTO에서 가져오기
+                    .roomId(((ChatFileDTO) fileDTO).getRoomId())  // roomId ChatFileDTO에서 가져오기
                     .build();
 
         }
 
-        //4. 파일DTO 반환
         return savedDTO;
 
     }
@@ -150,6 +156,12 @@ public class FileService {
     //파일 이름 생성
     private String generateFileName(FileDTO fileDTO) {
         return UUID.randomUUID() + "_" + fileDTO.getFileName();
+    }
+
+    // 파일 확장자 추출
+    private String getFileExtension(String fileName) {
+        int dotIndex = fileName.lastIndexOf(".");
+        return dotIndex == -1 ? "" : fileName.substring(dotIndex + 1).toLowerCase();
     }
 
     //Date -> LocalDateTime 변환
@@ -208,19 +220,6 @@ public class FileService {
         File file = fileRepository.findById(fileId)
                 .orElseThrow(() -> new FileNotFoundException("해당 파일이 존재하지 않습니다. id=" + fileId));
 
-        // System.out.println("file!!!!" + file.getCategory());
-        //System.out.println(file.getChatMessageId());
-//        FileDTO fileDTO = FileDTO.builder()
-//                .id(file.getId())
-//                .fileName(file.getFileName())
-//                .fileType(file.getFileType())
-//                .fileSize(file.getFileSize())
-//                .fileUrl(file.getFileUrl())
-//                .createdAt(file.getCreatedAt())
-//                .expiredAt(file.getExpiredAt())
-//                .category(file.getCategory())
-//                .build();
-
         FileDTO fileDTO = null;
 
         if (file.getCategory() == FileCategory.PROFILE) {
@@ -229,9 +228,11 @@ public class FileService {
                     .fileName(file.getFileName())
                     .fileType(file.getFileType())
                     .fileSize(file.getFileSize())
-                    .fileUrl(file.getFileUrl())
+                    .originFileUrl(file.getOriginFileUrl())
+                    .thumbNailUrl(file.getThumbNailUrl())
                     .createdAt(file.getCreatedAt())
                     .expiredAt(file.getExpiredAt())
+                    .nickname(file.getNickname())
                     .category(FileCategory.PROFILE)
                     .build();
 
@@ -241,11 +242,13 @@ public class FileService {
                     .fileName(file.getFileName())
                     .fileType(file.getFileType())
                     .fileSize(file.getFileSize())
-                    .fileUrl(file.getFileUrl())
+                    .originFileUrl(file.getOriginFileUrl())
+                    .thumbNailUrl(file.getThumbNailUrl())
                     .createdAt(file.getCreatedAt())
                     .expiredAt(file.getExpiredAt())
+                    .nickname(file.getNickname())
                     .category(FileCategory.CHAT)
-                    .chatMessageId(file.getChatMessageId())  // chatMessageId는 ChatFileDTO에서 가져오기
+                    .roomId(file.getRoomId())  // roomId ChatFileDTO에서 가져오기
                     .build();
         }
         return fileDTO;

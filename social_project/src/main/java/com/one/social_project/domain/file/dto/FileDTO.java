@@ -18,12 +18,14 @@ import java.time.LocalDateTime;
 public class FileDTO {
 
     private Long id;
+    private String nickname;
     private String fileName;
     private String fileType;
     private Long fileSize;
     @JsonIgnore
     private InputStream fileInputStream;
-    private String fileUrl;
+    private String originFileUrl;  //원본 url
+    private String thumbNailUrl;  //썸네일 url
     private LocalDateTime createdAt;
     private LocalDateTime expiredAt;
     private FileCategory category;
