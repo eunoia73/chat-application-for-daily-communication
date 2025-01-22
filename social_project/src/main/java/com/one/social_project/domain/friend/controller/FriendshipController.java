@@ -30,7 +30,7 @@ public class FriendshipController {
 
     @GetMapping("/accepts")
     public ResponseEntity<?> getAccepts(@AuthenticationPrincipal User user) throws Exception {
-        return friendshipService.getWaitingFriendList(user.getEmail());
+        return friendshipService.getAcceptFriendList(user.getEmail());
     }
 
     @PostMapping("/approve/{friendshipId}")
