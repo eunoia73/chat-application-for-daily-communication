@@ -12,13 +12,20 @@ import com.one.social_project.domain.user.util.RedisSessionManager;
 import com.one.social_project.domain.user.util.TokenProvider;
 import com.one.social_project.exception.errorCode.UserErrorCode;
 import com.one.social_project.exception.exception.UserException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 
 @Service
@@ -79,7 +86,7 @@ public class UserService implements UserDetailsService {
 
 
     // 로그인
-    public LoginResDto login(LoginReqDto loginReqDto) {
+    public LoginResDto login(LoginReqDto loginReqDto, HttpServletResponse response) {
 
         if(redisSessionManager.isTokenBlacklisted(loginReqDto.getAccessToken()))
         {
@@ -100,6 +107,11 @@ public class UserService implements UserDetailsService {
         // 로그인 성공 시 JWT 토큰 발급
         String accessToken = tokenProvider.createAccessToken(loginReqDto.getEmail());
         String refreshToken = tokenProvider.createRefreshToken(loginReqDto.getEmail());
+
+        response.addCookie(createCookie("Authorization", accessToken, true));
+// HttpServletResponse에 Authorization 헤더 적용
+        response.addHeader(HttpHeaders.AUTHORIZATION, "Bearer" + accessToken);
+
         return new LoginResDto(loginReqDto.getEmail(), accessToken, refreshToken);
     }
 
@@ -113,6 +125,17 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
         return new CustomUserDetails(user, null); // 여기에서 CustomUserDetails를 사용
+    }
+
+    private Cookie createCookie(String key, String value, boolean isHttpOnly) {
+
+        Cookie cookie = new Cookie(key, "Bearer" + value);
+        cookie.setMaxAge(60*60*60);
+        //cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setHttpOnly(isHttpOnly);
+
+        return cookie;
     }
 
 }

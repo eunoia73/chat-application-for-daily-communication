@@ -21,8 +21,6 @@ public class QFile extends EntityPathBase<File> {
 
     public final EnumPath<FileCategory> category = createEnum("category", FileCategory.class);
 
-    public final NumberPath<Long> chatMessageId = createNumber("chatMessageId", Long.class);
-
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public final DateTimePath<java.time.LocalDateTime> expiredAt = createDateTime("expiredAt", java.time.LocalDateTime.class);
@@ -33,9 +31,15 @@ public class QFile extends EntityPathBase<File> {
 
     public final StringPath fileType = createString("fileType");
 
-    public final StringPath fileUrl = createString("fileUrl");
-
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final StringPath nickname = createString("nickname");
+
+    public final StringPath originFileUrl = createString("originFileUrl");
+
+    public final StringPath roomId = createString("roomId");
+
+    public final StringPath thumbNailUrl = createString("thumbNailUrl");
 
     public QFile(String variable) {
         super(File.class, forVariable(variable));

@@ -1,8 +1,11 @@
 package com.one.social_project.domain.user.filter;
 
+import com.one.social_project.domain.user.entity.User;
+import com.one.social_project.domain.user.service.BlacklistService;
 import com.one.social_project.domain.user.util.TokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,9 +19,11 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
+    private final BlacklistService blacklistService;
 
-    public JwtAuthenticationFilter(TokenProvider tokenProvider) {
+    public JwtAuthenticationFilter(TokenProvider tokenProvider, BlacklistService blacklistService) {
         this.tokenProvider = tokenProvider;
+        this.blacklistService = blacklistService;
     }
 
     // 요청이 들어올 때마다 필터가 호출됨
@@ -30,14 +35,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // HTTP 요청에서 Authorization 헤더를 가져옴
         String token = getTokenFromRequest(request);
 
+        if(blacklistService.isTokenBlacklisted(token))
+        {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is blacklisted");
+            return;
+        }
+
+
+
         if (token != null && tokenProvider.validateAccessToken(token)) {
 
             // 유효한 토큰이면, 토큰에서 사용자 정보(email)를 가져옴
-            String email = tokenProvider.getEmailFromAccessToken(token);
+            User user = tokenProvider.getUserFromToken(token);
 
             // 해당 사용자 정보를 기반으로 Authentication 객체 생성
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    email, null, null // 사용자 정보는 Username만 가지고 인증
+                    user, null, null // 사용자 정보는 Username만 가지고 인증
             );
 
             // Authentication 객체를 SecurityContext에 설정
@@ -55,9 +68,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String getTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);  // "Bearer " 부분을 잘라냄
+        if (bearerToken != null && bearerToken.startsWith("Bearer")) {
+            return bearerToken.substring(6);  // "Bearer " 부분을 잘라냄
         }
         return null;
     }
+
+
 }

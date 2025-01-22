@@ -29,7 +29,7 @@ public class CustomLogoutSuccessHandler implements LogoutHandler, LogoutSuccessH
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
 
         String header = request.getHeader("Authorization");
-        String accessToken =  parseBearerToken(request, ApplicationConstants.JWT_HEADER);
+        String accessToken =  parseBearerToken(header);
         System.out.println("헤더 : "+accessToken);
 
         String email = tokenProvider.getEmailFromAccessToken(accessToken);
@@ -38,8 +38,6 @@ public class CustomLogoutSuccessHandler implements LogoutHandler, LogoutSuccessH
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()-> new RuntimeException("찾을 수 없음"));
         redisSessionManager.addToBlacklist(accessToken);
-
-
     }
 
 
@@ -60,11 +58,12 @@ public class CustomLogoutSuccessHandler implements LogoutHandler, LogoutSuccessH
         // 리다이렉션 없이, 프론트엔드에서 해당 응답을 처리하도록 합니다.
     }
 
-    private String parseBearerToken(HttpServletRequest request, String headerName) {
-        return Optional.ofNullable(request.getHeader(headerName))
-                .filter(headerValue -> headerValue.substring(0, 6).equalsIgnoreCase("Bearer"))
-                .map(headerValue -> headerValue.substring(7))
-                .orElse(null);
+    private String parseBearerToken(String headerName) {
+
+        if (headerName != null && headerName.startsWith("Bearer")) {
+            return headerName.substring(6);  // "Bearer " 부분을 잘라냄
+        }
+        return null;
     }
 
 }

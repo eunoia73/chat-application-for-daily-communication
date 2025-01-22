@@ -5,10 +5,14 @@ import com.one.social_project.domain.user.dto.login.LoginReqDto;
 import com.one.social_project.domain.user.dto.login.LoginResDto;
 import com.one.social_project.domain.user.dto.register.RegisterReqDto;
 import com.one.social_project.domain.user.dto.register.RegisterResDto;
+import com.one.social_project.domain.user.entity.User;
 import com.one.social_project.domain.user.service.CustomOAuth2UserService;
 import com.one.social_project.domain.user.service.UserService;
+import com.one.social_project.domain.user.util.CustomUserDetails;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,8 +24,8 @@ public class AuthController {
     private final CustomOAuth2UserService customOAuth2UserService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResDto> login(@RequestBody LoginReqDto loginReqDto) {
-        return ResponseEntity.ok(userService.login(loginReqDto));
+    public ResponseEntity<LoginResDto> login(@RequestBody LoginReqDto loginReqDto, HttpServletResponse response) {
+        return ResponseEntity.ok(userService.login(loginReqDto, response));
     }
 
     @PostMapping("/register")
@@ -36,7 +40,7 @@ public class AuthController {
     }
 
     @GetMapping("/login/oauth/code/{provider}")
-    public ResponseEntity<LoginResDto> loginWithOAuth(@RequestParam("code") String code, @PathVariable("provider") String provider) {
+    public ResponseEntity<LoginResDto> loginWithOAuth(@RequestParam("code") String code, @PathVariable("provider") String provider, HttpServletResponse response) {
         OAuth2UserInfo oAuth2UserInfo = customOAuth2UserService.getUserInfoFromOAuth(provider, code);
         oAuth2UserInfo.setProvider(provider);
 
@@ -52,6 +56,11 @@ public class AuthController {
         loginReqDto.setEmail(oAuth2UserInfo.getEmail());
         loginReqDto.setIsSocialLogin(true);
 
-        return ResponseEntity.ok(userService.login(loginReqDto));
+        return ResponseEntity.ok(userService.login(loginReqDto, response));
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> test(@AuthenticationPrincipal User customUserDetails) {
+        return ResponseEntity.ok(customUserDetails.getEmail());
     }
 }

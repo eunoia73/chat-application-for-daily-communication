@@ -56,7 +56,6 @@ public class SecurityConfig {
             "/api/chat/**",
             "/chat/**",
             "/h2-console/**",
-            "/**",
             "/files/**",
             "/api/login/oauth2/**"};
 

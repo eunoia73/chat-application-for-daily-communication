@@ -5,6 +5,7 @@ import com.one.social_project.domain.user.repository.UserRepository;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -71,6 +72,20 @@ public class TokenProvider {
 
             // 사용자 닉네임 반환
             return user.getNickname();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("토큰으로 닉네임 조회 실패: " + e.getMessage(), e);
+        }
+    }
+
+    public User getUserFromToken(String token) {
+        try {
+            String email = getEmailFromAccessToken(token);
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 사용자가 존재하지 않습니다."));
+
+            // 사용자 닉네임 반환
+            return user;
         } catch (Exception e) {
             throw new IllegalArgumentException("토큰으로 닉네임 조회 실패: " + e.getMessage(), e);
         }

@@ -28,7 +28,7 @@ public class QChatParticipants extends EntityPathBase<ChatParticipants> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final StringPath userId = createString("userId");
+    public final com.one.social_project.domain.user.entity.QUser user;
 
     public QChatParticipants(String variable) {
         this(ChatParticipants.class, forVariable(variable), INITS);
@@ -49,6 +49,7 @@ public class QChatParticipants extends EntityPathBase<ChatParticipants> {
     public QChatParticipants(Class<? extends ChatParticipants> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.chatRoom = inits.isInitialized("chatRoom") ? new QChatRoom(forProperty("chatRoom")) : null;
+        this.user = inits.isInitialized("user") ? new com.one.social_project.domain.user.entity.QUser(forProperty("user")) : null;
     }
 
 }
