@@ -28,9 +28,8 @@ public class ChatMessage {
 
     private List<String> readers; // 읽은 유저 목록
 
-    // hasfile (boolean) :
+    private String originFileUrl;
 
-    // fileurl (string) :
-
+    private String thumbnailUrl;
 
 }

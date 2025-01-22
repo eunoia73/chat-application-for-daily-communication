@@ -38,7 +38,7 @@ public class ReadReceiptService {
             message.getReaders().add(nickName);
             chatMessageRepository.save(message);
         } else {
-            System.out.println("이미 읽은 사용자입니다: messageId=" + messageId + ", userId=" + nickName);
+            log.info("이미 읽은 사용자입니다.: messageId={}, nickName={}", messageId, nickName);
         }
     }
 

@@ -51,5 +51,4 @@ public class ChatMessageService {
             chatMessageRepository.save(chatMessage);
         }
     }
-
 }
