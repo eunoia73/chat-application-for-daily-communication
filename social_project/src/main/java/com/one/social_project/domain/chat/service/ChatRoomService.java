@@ -12,6 +12,8 @@ import com.one.social_project.domain.chat.repository.ChatParticipantsRepository;
 import com.one.social_project.domain.chat.repository.ChatRoomRepository;
 import com.one.social_project.domain.user.entity.User;
 import com.one.social_project.domain.user.repository.UserRepository;
+import com.one.social_project.domain.user.util.TokenProvider;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,26 +29,41 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatRoomService {
     private final UserRepository userRepository;
-
+    private final TokenProvider tokenProvider;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatParticipantsRepository chatParticipantsRepository;
 
     // 채팅방 생성 (개인 채팅방 또는 그룹 채팅방)
-    public ChatRoomDTO createChatRoom(String roomName, List<String> participants) {
+    public ChatRoomDTO createChatRoom(String token, String roomName, List<String> participants) {
 
+        // 토큰에서 닉네임 추출
+        String createrNickname = tokenProvider.getNicknameFromToken(token);
+        User creater = userRepository.findByNickname(createrNickname)
+                .orElseThrow(() -> new EntityNotFoundException("User not found for token: " + createrNickname));
+
+
+        if (participants == null || participants.isEmpty()) {
+            throw new IllegalArgumentException("참여자가 최소 1명 이상이어야 합니다.");
+        }
+
+        // 참여자 닉네임을 USER객체로 변환 및 중복 제거
         List<User> users = participants.stream()
-                .map(nickname ->{
-                    User user = userRepository.findByNickname(nickname)
-                            .orElseThrow(() -> new IllegalArgumentException("User not found for email: " + nickname));
-                    return user;
-                }).collect(Collectors.toList());
+                .map(nickname -> userRepository.findByNickname(nickname)
+                        .orElseThrow(() -> new EntityNotFoundException("User not found for nickname: " + nickname)))
+                .distinct()
+                .collect(Collectors.toList());
+
+        if(!users.contains(creater)){
+            users.add(creater);
+        }
+
         if (users.size() == 2) {
             // 개인 채팅방 생성
-            return createDirectChatRoom(users.get(0), users.get(1), roomName);
+            return createDirectChatRoom(users.get(0), roomName, token);
         } else if (users.size() > 2) {
             // 그룹 채팅방 생성
-            return createGroupChatRoom(roomName, users);
+            return createGroupChatRoom(roomName, users, creater);
         } else {
             throw new IllegalArgumentException("참여자가 2명 이상이어야 합니다.");
         }
@@ -56,7 +73,7 @@ public class ChatRoomService {
     public ChatRoomDTO getChatRoom(String roomId) {
         // 채팅방 조회
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
-                .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
         return convertToDTO(chatRoom);
     }
 
@@ -98,14 +115,14 @@ public class ChatRoomService {
     }
 
     // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
-    public String leaveChatRoom(String roomId, String nickName) {
+    public boolean leaveChatRoom(String roomId, String nickName) {
         // 채팅방 확인
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
-                .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
 
         // 참여자 확인
         ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserNickname(roomId, nickName)
-                .orElseThrow(() -> new RuntimeException("참여자가 채팅방에 존재하지 않습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("참여자가 채팅방에 존재하지 않습니다."));
 
         if (participant.getChatRole() == ChatRole.OWNER) {
             chatParticipantsRepository.findByChatRoomRoomId(roomId).stream()
@@ -125,21 +142,24 @@ public class ChatRoomService {
         if (checkParticipants.isEmpty()) {
             chatRoomRepository.delete(chatRoom);
             chatMessageRepository.deleteAllByRoomId(roomId); // 메시지 삭제
-            return "채팅방이 삭제되었습니다.";
+            return true;
         }
-        return nickName+"님이 채팅방에서 나갔습니다.";
+        return false;
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // 개인 채팅방 생성
-    private ChatRoomDTO createDirectChatRoom(User user1, User user2, String roomName) {
-        String roomId = generatePersonalRoomId(user1.getNickname(), user2.getNickname());
+    private ChatRoomDTO createDirectChatRoom(User user2, String roomName, String token) {
+        String roomId = UUID.randomUUID().toString();
 
-        // 기존 채팅방 확인
-        Optional<ChatRoom> existingRoom = chatRoomRepository.findByRoomId(roomId);
-        if (existingRoom.isPresent()) {
-            return convertToDTO(existingRoom.get());
+        // 토큰에서 닉네임 추출
+        String createrNickname = tokenProvider.getNicknameFromToken(token);
+        User creater = userRepository.findByNickname(createrNickname)
+                .orElseThrow(() -> new IllegalArgumentException("User not found for token: " + createrNickname));
+
+        if (roomName == null || roomName.trim().isEmpty()) {
+            roomName = user2.getNickname();
         }
 
         // 새 채팅방 생성
@@ -156,7 +176,7 @@ public class ChatRoomService {
         chatParticipantsRepository.save(
                 ChatParticipants.builder()
                         .chatRoom(chatRoom)
-                        .user(user1)
+                        .user(creater)
                         .chatRole(ChatRole.OWNER) // 방장
                         .build());
 
@@ -171,7 +191,7 @@ public class ChatRoomService {
     }
 
     // 그룹 채팅방 생성
-    private ChatRoomDTO createGroupChatRoom(String roomName, List<User> users) {
+    private ChatRoomDTO createGroupChatRoom(String roomName, List<User> users, User creater) {
         if(users.isEmpty()){
             throw new IllegalArgumentException("참여자는 최소 1명 이상이어야 합니다.");
         }
@@ -189,10 +209,8 @@ public class ChatRoomService {
         chatRoomRepository.save(chatRoom);
 
         // 참여자 추가
-        for(int i = 0 ; i < users.size(); i++){
-            User user = users.get(i);
-
-            ChatRole chatRole = (i == 0) ? ChatRole.OWNER : ChatRole.MEMBER;
+        for(User user : users){
+            ChatRole chatRole = (user.equals(creater)) ? ChatRole.OWNER : ChatRole.MEMBER;
 
             chatParticipantsRepository.save(
                     ChatParticipants.builder()
@@ -203,11 +221,6 @@ public class ChatRoomService {
         }
 
         return convertToDTO(chatRoom);
-    }
-
-    // 두 사용자 ID를 정렬하여 고유한 roomId 생성
-    private String generatePersonalRoomId(String user1, String user2) {
-        return (user1.compareTo(user2) < 0) ? user1 + ":" + user2 : user2 + ":" + user1;
     }
 
     // 특정 채팅방의 사용자가 읽지 않은 메시지 개수 계산
