@@ -1,15 +1,18 @@
 package com.one.social_project.domain.user.util;
 
 import com.one.social_project.domain.user.entity.User;
+import com.one.social_project.domain.user.repository.UserRepository;
 import io.jsonwebtoken.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class TokenProvider {
+    private final UserRepository userRepository;
 
     // JWT 비밀 키 (보안을 위해 환경 변수 또는 Spring Secret Store에 저장하는 것이 좋습니다)
     @Value("${spring.jwt.secret}")
@@ -57,6 +60,20 @@ public class TokenProvider {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();  // subject는 사용자 이메일
+    }
+
+    public String getNicknameFromToken(String token) {
+        try {
+            String email = getEmailFromAccessToken(token);
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 사용자가 존재하지 않습니다."));
+
+            // 사용자 닉네임 반환
+            return user.getNickname();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("토큰으로 닉네임 조회 실패: " + e.getMessage(), e);
+        }
     }
 
     // JWT 토큰에서 사용자 정보를 추출하는 메서드 (Refresh Token)
