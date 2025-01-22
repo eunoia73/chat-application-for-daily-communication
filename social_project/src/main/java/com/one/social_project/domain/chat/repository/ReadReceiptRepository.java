@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReadReceiptRepository extends JpaRepository<ReadReceipt, Long> {
 
-    boolean existsByMessageIdAndUserId(String messageId, String nickName);
+    boolean existsByMessageIdAndUserId(String messageId, String nickname);
 
 }
