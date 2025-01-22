@@ -1,5 +1,6 @@
 package com.one.social_project.domain.user.entity;
 
+import com.one.social_project.domain.user.dto.user.UserDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -49,5 +50,21 @@ public class User {
 
     public void changePassword(String password) {
         this.password = password;
+    }
+
+    public UserDto toDto() {
+        return UserDto.builder()
+                .id(id)
+                .nickname(nickname)
+                .email(email)
+                .password(password)
+                .isFirstLogin(isFirstLogin)
+                .role(role)
+                .profileImg(profileImg)
+                .activated(activated)
+                .oauthProvider(oauthProvider)
+                .oauthId(oauthId)
+                .oauthToken(oauthToken)
+                .build();
     }
 }

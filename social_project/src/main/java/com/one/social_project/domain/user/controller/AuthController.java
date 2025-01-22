@@ -6,9 +6,8 @@ import com.one.social_project.domain.user.dto.login.LoginResDto;
 import com.one.social_project.domain.user.dto.register.RegisterReqDto;
 import com.one.social_project.domain.user.dto.register.RegisterResDto;
 import com.one.social_project.domain.user.entity.User;
+import com.one.social_project.domain.user.service.AuthService;
 import com.one.social_project.domain.user.service.CustomOAuth2UserService;
-import com.one.social_project.domain.user.service.UserService;
-import com.one.social_project.domain.user.util.CustomUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,22 +19,22 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class AuthController {
 
-    private final UserService userService;
+    private final AuthService authService;
     private final CustomOAuth2UserService customOAuth2UserService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResDto> login(@RequestBody LoginReqDto loginReqDto, HttpServletResponse response) {
-        return ResponseEntity.ok(userService.login(loginReqDto, response));
+        return ResponseEntity.ok(authService.login(loginReqDto, response));
     }
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResDto> register(@RequestBody RegisterReqDto registerReqDto) {
-        return ResponseEntity.ok(userService.register(registerReqDto));
+        return ResponseEntity.ok(authService.register(registerReqDto));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        userService.logout();
+        authService.logout();
         return ResponseEntity.ok().build();
     }
 
@@ -44,19 +43,19 @@ public class AuthController {
         OAuth2UserInfo oAuth2UserInfo = customOAuth2UserService.getUserInfoFromOAuth(provider, code);
         oAuth2UserInfo.setProvider(provider);
 
-        if (!userService.isRegistered(oAuth2UserInfo.getEmail())) {
+        if (!authService.isRegistered(oAuth2UserInfo.getEmail())) {
             RegisterReqDto registerReqDto = new RegisterReqDto();
             registerReqDto.setEmail(oAuth2UserInfo.getEmail());
             registerReqDto.setNickname(oAuth2UserInfo.getNickname());
             registerReqDto.setOauth2UserInfo(oAuth2UserInfo);
-            userService.register(registerReqDto);
+            authService.register(registerReqDto);
         }
 
         LoginReqDto loginReqDto = new LoginReqDto();
         loginReqDto.setEmail(oAuth2UserInfo.getEmail());
         loginReqDto.setIsSocialLogin(true);
 
-        return ResponseEntity.ok(userService.login(loginReqDto, response));
+        return ResponseEntity.ok(authService.login(loginReqDto, response));
     }
 
     @GetMapping("/test")
