@@ -1,8 +1,12 @@
 package com.one.social_project.domain.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.one.social_project.domain.friend.entity.Friendship;
 import com.one.social_project.domain.user.dto.user.UserDto;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Entity
 @Getter
@@ -27,6 +31,11 @@ public class User {
     private String oauthProvider;  // 예: "google", "facebook"
     private String oauthId;        // OAuth 제공자에서 반환하는 고유 식별자
     private String oauthToken;     // OAuth 액세스 토큰 (선택적, 저장하는 것이 보통 아님)
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonManagedReference  // 무한 참조 방지
+    private List<Friendship> friendshipList;
+
 
     // 일반 회원가입과 OAuth 가입을 구분할 수 있도록 변경된 생성자
     public User(String email, String password, String nickname, boolean isFirstLogin, String role, boolean activated) {

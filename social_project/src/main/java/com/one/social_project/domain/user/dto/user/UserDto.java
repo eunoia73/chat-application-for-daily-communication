@@ -1,12 +1,14 @@
 package com.one.social_project.domain.user.dto.user;
 
+import com.one.social_project.domain.friend.entity.Friendship;
 import com.one.social_project.domain.user.entity.User;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
+
+import java.util.List;
 
 @Data
 @RequiredArgsConstructor
+@AllArgsConstructor
 @Builder
 public class UserDto {
 
@@ -24,6 +26,8 @@ public class UserDto {
     private String oauthId;        // OAuth 제공자에서 반환하는 고유 식별자
     private String oauthToken;     // OAuth 액세스 토큰 (선택적, 저장하는 것이 보통 아님)
 
+    private List<Friendship> friendshipList;
+
     public User toEntity()
     {
         return User.builder()
@@ -38,6 +42,7 @@ public class UserDto {
                 .oauthProvider(oauthProvider)
                 .oauthId(oauthId)
                 .oauthToken(oauthToken)
+                .friendshipList(friendshipList)
                 .build();
     }
 }
