@@ -7,12 +7,14 @@ import com.one.social_project.domain.chat.repository.ReadReceiptRepository;
 import com.one.social_project.domain.chat.repository.mongo.ChatMessageRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReadReceiptService {
@@ -22,20 +24,21 @@ public class ReadReceiptService {
 
     // 메시지 읽음 상태 업데이트
     @Transactional
-    public void markAsRead(String messageId, String userId){
+    public void markAsRead(String messageId, String nickName){
         // ReadReceipt 사용자 추가
-        if (!readReceiptRepository.existsByMessageIdAndUserId(messageId, userId)) {
-            saveReadReceipt(messageId, userId);
+        if (!readReceiptRepository.existsByMessageIdAndUserId(messageId, nickName)) {
+            saveReadReceipt(messageId, nickName);
         }
 
         // 메시지 읽음 목록에 사용자 추가
         ChatMessage message = chatMessageRepository.findById(messageId)
                 .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다. ID: " + messageId));
 
-        if (message.getReaders().add(userId)) { // 읽음 목록에 추가되었을 경우에만 저장
+        if (!message.getReaders().contains(nickName)) { // 중복 여부 확인
+            message.getReaders().add(nickName);
             chatMessageRepository.save(message);
         } else {
-            System.out.println("이미 읽은 사용자입니다: messageId=" + messageId + ", userId=" + userId);
+            System.out.println("이미 읽은 사용자입니다: messageId=" + messageId + ", userId=" + nickName);
         }
     }
 

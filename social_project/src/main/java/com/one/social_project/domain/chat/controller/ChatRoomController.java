@@ -93,16 +93,16 @@ public class ChatRoomController {
 
     // 사용자별 채팅방 목록 조회
     @GetMapping("/rooms/{userId}")
-    public ResponseEntity<List<ChatRoomDTO>> getUserChatRooms(@PathVariable String userId){
-        List<ChatRoomDTO> chatRooms = chatRoomService.getUserChatRooms(userId);
+    public ResponseEntity<List<ChatRoomDTO>> getUserChatRooms(@PathVariable String nickName){
+        List<ChatRoomDTO> chatRooms = chatRoomService.getUserChatRooms(nickName);
         return ResponseEntity.ok(chatRooms);
     }
 
     // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
     @DeleteMapping("/{roomId}/leave/{participantId}")
-    public ResponseEntity<String> leaveChatRoom(@PathVariable("roomId") String roomId, @PathVariable("participantId") String userId) {
+    public ResponseEntity<String> leaveChatRoom(@PathVariable("roomId") String roomId, @PathVariable("participantId") String nickName) {
         try {
-            String result = chatRoomService.leaveChatRoom(roomId, userId);
+            String result = chatRoomService.leaveChatRoom(roomId, nickName);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body("채팅방을 찾을 수 없습니다.");
