@@ -7,7 +7,6 @@ import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ReadReceiptService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -45,13 +44,17 @@ public class WebSocketHandler extends TextWebSocketHandler {
             String sender = extractSender(session);
             roomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>()).add(session);
 
-            Map<String, Object> joinMessage = Map.of(
-                    "chatType", "ENTER",
-                    "message", sender + "님이 입장하였습니다."
-            );
-            broadcast(roomId, createTextMessage(joinMessage));
+            // 입장 메시지 처리
+            ChatMessageDTO chatMessageDTO = ChatMessageDTO.builder()
+                    .roomId(roomId)
+                    .sender(sender)
+                    .chatType("ENTER")
+                    .build();
 
-            log.info("WebSocket 연결 성공: roomId={}", roomId);
+            // 입장 메시지를 브로드캐스트 및 처리
+            handleEnterMessage(session, chatMessageDTO);
+
+            log.info("WebSocket 연결 성공: roomId={}, sender={}", roomId, sender);
         } catch (Exception e) {
             log.error("WebSocket 연결 실패: {}", e.getMessage(), e);
             closeSession(session, CloseStatus.SERVER_ERROR);
@@ -68,11 +71,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
             ChatMessageDTO chatMessageDTO = objectMapper.readValue(payload, ChatMessageDTO.class);
 
             switch (chatMessageDTO.getChatType()) {
-                case "ENTER":
-                    handleEnterMessage(session, chatMessageDTO);
-                    break;
                 case "CHAT":
-                    handleChatMessage(chatMessageDTO);
+                    handleChatMessage(session, chatMessageDTO);
                     break;
                 case "UNREAD_COUNT":
                     handleUnreadCountRequest(chatMessageDTO, session);
@@ -93,12 +93,19 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = chatMessageDTO.getRoomId();
         String sender = chatMessageDTO.getSender();
 
-        roomSessions.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>()).add(session);
-        log.info("ENTER 메시지 처리 완료: roomId={}, sender={}", roomId, sender);
-
         // 읽지 않은 메시지 처리
         handleReadAllUnreadMessages(roomId, sender);
+
+        // 입장 메시지 브로드캐스트
+        Map<String, Object> joinMessage = Map.of(
+                "chatType", "ENTER",
+                "message", sender + "님이 입장하였습니다."
+        );
+        broadcast(roomId, createTextMessage(joinMessage)); // 중복 호출 확인
+        log.info("ENTER 메시지 처리 완료: roomId={}, sender={}", roomId, sender);
     }
+
+
 
     /**
      * 읽지 않은 메시지를 모두 읽음 처리
@@ -131,7 +138,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     /**
      * 채팅 메시지 처리
      */
-    private void handleChatMessage(ChatMessageDTO chatMessageDTO) {
+    private void handleChatMessage(WebSocketSession session, ChatMessageDTO chatMessageDTO) {
         String roomId = chatMessageDTO.getRoomId();
         String sender = chatMessageDTO.getSender();
         String message = chatMessageDTO.getMessage();
