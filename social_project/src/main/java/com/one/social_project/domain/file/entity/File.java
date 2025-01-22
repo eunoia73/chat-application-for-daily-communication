@@ -39,23 +39,17 @@ public class File {
     @Column(nullable = false)
     private Long fileSize;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id")
-//    private User user;  // 파일을 업로드한 사용자와의 관계 (ManyToOne)
-//
-//    @OneToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "chat_id")
-//    private ChatMessage chatMessage;  // 채팅 메시지와의 관계 (OneToOne)
+    @Column(nullable = false)
+    private String nickname;  //파일을 업로드한 사용자 닉네임
 
-    @Column(nullable = true)  // chatMessageId를 null 가능하게 설정
-    private Long chatMessageId;
+    @Column(nullable = true)  // roomId를 null 가능하게 설정
+    private String roomId;  //채팅에서 보냈을 경우, roomId
 
     @CreatedDate
     private LocalDateTime createdAt;
     private LocalDateTime expiredAt;
 
 
-    //==연관관계 메서드==//
 
 }
 

@@ -10,6 +10,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @ToString
 public class ChatFileDTO extends FileDTO {
-    private Long chatMessageId;
+    private String roomId;
 
 }

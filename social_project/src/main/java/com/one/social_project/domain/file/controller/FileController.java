@@ -5,6 +5,7 @@ import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
 import com.one.social_project.domain.file.entity.FileCategory;
 import com.one.social_project.domain.file.service.FileService;
+import com.one.social_project.domain.user.util.CustomUserDetails;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,13 +53,16 @@ public class FileController {
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFiles(@RequestPart("file") List<MultipartFile> files,
                                          @RequestParam("category") String category,
-//                                         @RequestParam("userId") Long id,
-                                         @RequestParam(value = "messageId", required = false) Long messageId) throws IOException {
+//                                         @AuthenticationPrincipal CustomUserDetails customUserDetails,
+                                         @RequestParam("nickname") String nickname,
+                                         @RequestParam(value = "roomId", required = false) String roomId) throws IOException {
+
+//        String nickname = customUserDetails.getUser().getNickname();  //유저정보 꺼내오기
 
         List<FileDTO> uploadedFiles = new ArrayList<>();
 
         // 'chat' 카테고리일 때만 messageId 필수 체크
-        if ("chat".equalsIgnoreCase(category) && messageId == null) {
+        if ("chat".equalsIgnoreCase(category) && roomId == null) {
             return ResponseEntity.badRequest().body("messageId는 chat 카테고리에서 필수입니다.");
         }
 
@@ -83,6 +88,7 @@ public class FileController {
             if (fileCategory == FileCategory.PROFILE) {
                 fileDTO = ProfileFileDTO.builder()
                         .fileName(escapedFileName)
+                        .nickname(nickname)
                         .fileType(file.getContentType())
                         .fileSize(file.getSize())
                         .fileInputStream(file.getInputStream())
@@ -92,11 +98,12 @@ public class FileController {
             } else if (fileCategory == FileCategory.CHAT) {
                 fileDTO = ChatFileDTO.builder()
                         .fileName(escapedFileName)
+                        .nickname(nickname)
                         .fileType(file.getContentType())
                         .fileSize(file.getSize())
                         .fileInputStream(file.getInputStream())
                         .category(FileCategory.CHAT)
-                        .chatMessageId(messageId)  //chat일때만 추가
+                        .roomId(roomId)  //chat일때만 추가
                         .build();
 
             }
@@ -157,7 +164,7 @@ public class FileController {
         // 파일이 Chat일 경우
         if (fileDTO instanceof ChatFileDTO) {
             // ChatFileDTO에서 chatMessageId가 있는지 확인
-            if (((ChatFileDTO) fileDTO).getChatMessageId() == null) {
+            if (((ChatFileDTO) fileDTO).getRoomId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "Chat 파일에 필요한 chatMessageId가 없습니다."));
             }
@@ -191,7 +198,7 @@ public class FileController {
         // 파일이 Chat일 경우
         if (fileDTO instanceof ChatFileDTO) {
             // ChatFileDTO에서 chatMessageId가 있는지 확인
-            if (((ChatFileDTO) fileDTO).getChatMessageId() == null) {
+            if (((ChatFileDTO) fileDTO).getRoomId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "Chat 파일에 필요한 chatMessageId가 없습니다."));
             }

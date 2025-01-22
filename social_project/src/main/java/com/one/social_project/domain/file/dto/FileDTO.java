@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 public class FileDTO {
 
     private Long id;
+    private String nickname;
     private String fileName;
     private String fileType;
     private Long fileSize;

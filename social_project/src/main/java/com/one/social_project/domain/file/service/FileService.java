@@ -3,7 +3,7 @@ package com.one.social_project.domain.file.service;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
-import com.one.social_project.domain.file.FileValidator;
+import com.one.social_project.domain.file.FileUtil;
 import com.one.social_project.domain.file.dto.ChatFileDTO;
 import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
@@ -14,20 +14,14 @@ import com.one.social_project.domain.file.repository.FileRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Value;
 import com.amazonaws.services.s3.AmazonS3;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -36,7 +30,7 @@ import java.util.UUID;
 public class FileService {
 
     private final FileRepository fileRepository;
-    private final FileValidator fileValidator;
+    private final FileUtil fileUtil;
     private final AmazonS3 s3Client;
 
     @Value("${cloud.aws.s3.bucket-name-1}")
@@ -66,14 +60,13 @@ public class FileService {
     public FileDTO uploadFile(FileDTO fileDTO) throws IOException {
 
         //파일 검증
-        fileValidator.validateFile(fileDTO);
+        fileUtil.validateFile(fileDTO);
 
         //1. 파일 이름 변경, url 생성
         String fileName = generateFileName(fileDTO);
         String fileUrl = defaultUrl + fileName;
 
         //2. 파일 업로드
-        //InputStream fileInputStream = fileDTO.getFileInputStream();
         fileDTO.setFileInputStream(fileDTO.getFileInputStream());
         PutObjectResult putObjectResult = uploadS3(fileDTO, fileName);
 
@@ -85,7 +78,8 @@ public class FileService {
                 .fileUrl(fileUrl)
                 .expiredAt(convertToLocalDateTime(putObjectResult.getExpirationTime()))
                 .category(fileDTO.getCategory())
-                .chatMessageId(fileDTO instanceof ChatFileDTO ? ((ChatFileDTO) fileDTO).getChatMessageId() : null)  // chat일 때만 chatMessageId 설정
+                .nickname(fileDTO.getNickname())
+                .roomId(fileDTO instanceof ChatFileDTO ? ((ChatFileDTO) fileDTO).getRoomId() : null)  // chat일 때만 roomId 설정
                 .build();
         File saved = fileRepository.save(file);
 
@@ -110,6 +104,7 @@ public class FileService {
                     .fileUrl(saved.getFileUrl())
                     .createdAt(saved.getCreatedAt())
                     .expiredAt(saved.getExpiredAt())
+                    .nickname(saved.getNickname())
                     .category(FileCategory.PROFILE)
                     .build();
 
@@ -122,8 +117,9 @@ public class FileService {
                     .fileUrl(saved.getFileUrl())
                     .createdAt(saved.getCreatedAt())
                     .expiredAt(saved.getExpiredAt())
+                    .nickname(saved.getNickname())
                     .category(FileCategory.CHAT)
-                    .chatMessageId(((ChatFileDTO) fileDTO).getChatMessageId())  // chatMessageId는 ChatFileDTO에서 가져오기
+                    .roomId(((ChatFileDTO) fileDTO).getRoomId())  // roomId ChatFileDTO에서 가져오기
                     .build();
 
         }
@@ -232,6 +228,7 @@ public class FileService {
                     .fileUrl(file.getFileUrl())
                     .createdAt(file.getCreatedAt())
                     .expiredAt(file.getExpiredAt())
+                    .nickname(file.getNickname())
                     .category(FileCategory.PROFILE)
                     .build();
 
@@ -244,8 +241,9 @@ public class FileService {
                     .fileUrl(file.getFileUrl())
                     .createdAt(file.getCreatedAt())
                     .expiredAt(file.getExpiredAt())
+                    .nickname(file.getNickname())
                     .category(FileCategory.CHAT)
-                    .chatMessageId(file.getChatMessageId())  // chatMessageId는 ChatFileDTO에서 가져오기
+                    .roomId(file.getRoomId())  // roomId ChatFileDTO에서 가져오기
                     .build();
         }
         return fileDTO;

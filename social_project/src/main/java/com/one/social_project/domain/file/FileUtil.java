@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
-public class FileValidator {
+public class FileUtil {
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "pdf", "txt", "doc", "ppt", "gif", "mp4", "zip", "docx", "pptx", "xlsx", "xls");
     private static final List<String> ALLOWED_EXTENSIONS_PROFILE = Arrays.asList("jpg", "jpeg", "png", "gif");
 
