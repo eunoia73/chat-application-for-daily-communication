@@ -50,7 +50,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             ChatMessageDTO chatMessageDTO = ChatMessageDTO.builder()
                     .roomId(roomId)
                     .sender(nickname)
-                    .chatType("ENTER")
+                    .messageType("ENTER")
                     .build();
 
             // 입장 메시지를 브로드캐스트 및 처리
@@ -72,7 +72,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             String payload = message.getPayload();
             ChatMessageDTO chatMessageDTO = objectMapper.readValue(payload, ChatMessageDTO.class);
 
-            switch (chatMessageDTO.getChatType()) {
+            switch (chatMessageDTO.getMessageType()) {
                 case "CHAT":
                     handleChatMessage(session, chatMessageDTO);
                     break;
