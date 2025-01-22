@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/email")
+@RequestMapping("/api/email")
 public class EmailController {
     private final EmailService emailService;
 
     // 인증코드 메일 발송
     @PostMapping("/send")
-    public String mailSend(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody EmailDto emailDto) throws MessagingException {
+    public String mailSend(@RequestBody EmailDto emailDto) throws MessagingException {
         log.info("EmailController.mailSend()");
         emailService.sendEmail(emailDto.getMail());
         return "인증코드가 발송되었습니다.";
