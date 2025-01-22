@@ -77,9 +77,9 @@ public class ChatRoomService {
     }
 
     // 사용자별 채팅방 조회
-    public List<ChatRoomDTO> getUserChatRooms(String email){
+    public List<ChatRoomDTO> getUserChatRooms(String nickName){
         // 사용자가 참여 중인 채팅방 ID 목록 조회
-        List<String> roomId = chatParticipantsRepository.findByUserNickname(email)
+        List<String> roomId = chatParticipantsRepository.findByUserNickname(nickName)
                 .stream()
                 .map(participants -> participants.getChatRoom().getRoomId())
                 .distinct()
@@ -91,20 +91,20 @@ public class ChatRoomService {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(chatRoom -> {
-                    int unreadCount = countUnreadMessages(chatRoom.getRoomId(), email);
+                    int unreadCount = countUnreadMessages(chatRoom.getRoomId(), nickName);
                     return convertToDTOWithUnreadCount(chatRoom, unreadCount);
                 })
                 .collect(Collectors.toList());
     }
 
     // 채팅방 나가기 및 채팅방 참여자 없을 시 채팅방 삭제
-    public String leaveChatRoom(String roomId, String email) {
+    public String leaveChatRoom(String roomId, String nickName) {
         // 채팅방 확인
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
 
         // 참여자 확인
-        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserNickname(roomId, email)
+        ChatParticipants participant = chatParticipantsRepository.findByChatRoomRoomIdAndUserNickname(roomId, nickName)
                 .orElseThrow(() -> new RuntimeException("참여자가 채팅방에 존재하지 않습니다."));
 
         if (participant.getChatRole() == ChatRole.OWNER) {
@@ -127,7 +127,7 @@ public class ChatRoomService {
             chatMessageRepository.deleteAllByRoomId(roomId); // 메시지 삭제
             return "채팅방이 삭제되었습니다.";
         }
-        return "채팅방에서 나갔습니다.";
+        return nickName+"님이 채팅방에서 나갔습니다.";
     }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -220,7 +220,7 @@ public class ChatRoomService {
     // ChatRoom Entity -> DTO
     private ChatRoomDTO convertToDTO(ChatRoom chatRoom) {
         // 참여자 정보를 추출 및 DTO 변환
-        List<String> participantEmails = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
+        List<String> participantNickNames = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
                 .map(chatParticipants -> chatParticipants.getUser().getNickname())
                 .collect(Collectors.toList());
@@ -242,7 +242,7 @@ public class ChatRoomService {
                 .ownerId(ownerId)
                 .roomType(chatRoom.getRoomType())
                 .createdAt(chatRoom.getCreatedAt())
-                .participants(participantEmails)
+                .participants(participantNickNames)
                 .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
                 .build();
     }
@@ -259,7 +259,7 @@ public class ChatRoomService {
     // ChatRoom Entity -> DTO 변환 (읽지 않은 메시지 포함)
     private ChatRoomDTO convertToDTOWithUnreadCount(ChatRoom chatRoom, int unreadCount) {
         // 참여자 정보 추출
-        List<String> participantUserIds = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
+        List<String> participantUserNickNames = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
                 .map(chatParticipants -> chatParticipants.getUser().getNickname())
                 .collect(Collectors.toList());
@@ -281,7 +281,7 @@ public class ChatRoomService {
                 .ownerId(ownerId)
                 .roomType(chatRoom.getRoomType())
                 .createdAt(chatRoom.getCreatedAt())
-                .participants(participantUserIds)
+                .participants(participantUserNickNames)
                 .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
                 .unreadCount(unreadCount) // 읽지 않은 메시지 개수 추가
                 .build();
