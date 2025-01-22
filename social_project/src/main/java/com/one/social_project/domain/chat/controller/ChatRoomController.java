@@ -6,7 +6,6 @@ import com.one.social_project.domain.chat.constant.ChatRoomType;
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ChatRoomService;
-import com.one.social_project.domain.user.util.CustomUserDetails;
 import com.one.social_project.domain.user.util.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -53,20 +51,6 @@ public class ChatRoomController {
         }
     }
 
-    // 특정 채팅방 조회
-    @GetMapping("/{roomId}")
-    public ResponseEntity<ChatRoomDTO> getChatRoom(@PathVariable("roomId") String roomId) {
-        ChatRoomDTO chatRoom = chatRoomService.getChatRoom(roomId);
-        return ResponseEntity.ok(chatRoom);
-    }
-
-    // 모든 채팅방 조회
-    @GetMapping("/roomlist")
-    public ResponseEntity<List<ChatRoomDTO>> getAllChatRooms() {
-        List<ChatRoomDTO> chatRooms = chatRoomService.getAllChatRooms();
-        return ResponseEntity.ok(chatRooms);
-    }
-
     // 특정 채팅방의 메시지 조회
     @GetMapping("/{roomId}/chat-list")
     public ResponseEntity<Page<ChatMessage>> getMessages(@PathVariable("roomId") String roomId , Pageable pageable) {
@@ -86,9 +70,12 @@ public class ChatRoomController {
     }
 
     // 사용자별 채팅방 목록 조회
-    @GetMapping("/rooms/{userId}")
-    public ResponseEntity<List<ChatRoomDTO>> getUserChatRooms(@PathVariable String nickName){
-        List<ChatRoomDTO> chatRooms = chatRoomService.getUserChatRooms(nickName);
+    @GetMapping("/roomlist")
+    public ResponseEntity<List<ChatRoomDTO>> getUserChatRooms(@RequestHeader("Authorization") String authHeader){
+        String token = authHeader.substring(7);
+
+        List<ChatRoomDTO> chatRooms = chatRoomService.getUserChatRooms(token);
+
         return ResponseEntity.ok(chatRooms);
     }
 

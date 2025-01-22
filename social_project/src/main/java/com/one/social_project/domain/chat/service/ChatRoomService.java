@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,22 +71,6 @@ public class ChatRoomService {
         }
     }
 
-    // 특정 채팅방 조회
-    public ChatRoomDTO getChatRoom(String roomId) {
-        // 채팅방 조회
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
-        return convertToDTO(chatRoom);
-    }
-
-    // 모든 채팅방 조회
-    public List<ChatRoomDTO> getAllChatRooms() {
-        List<ChatRoom> chatRooms = chatRoomRepository.findAll();
-        return chatRooms.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
     // 특정 채팅방 참여자 상세 조회
     public List<ChatParticipantsDTO> getChatRoomParticipants(String roomId){
         return chatParticipantsRepository.findByChatRoomRoomId(roomId)
@@ -94,9 +80,11 @@ public class ChatRoomService {
     }
 
     // 사용자별 채팅방 조회
-    public List<ChatRoomDTO> getUserChatRooms(String nickName){
+    public List<ChatRoomDTO> getUserChatRooms(String token){
+        String userNickname = tokenProvider.getNicknameFromToken(token);
+
         // 사용자가 참여 중인 채팅방 ID 목록 조회
-        List<String> roomId = chatParticipantsRepository.findByUserNickname(nickName)
+        List<String> roomId = chatParticipantsRepository.findByUserNickname(userNickname)
                 .stream()
                 .map(participants -> participants.getChatRoom().getRoomId())
                 .distinct()
@@ -108,7 +96,7 @@ public class ChatRoomService {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(chatRoom -> {
-                    int unreadCount = countUnreadMessages(chatRoom.getRoomId(), nickName);
+                    int unreadCount = countUnreadMessages(chatRoom.getRoomId(), userNickname);
                     return convertToDTOWithUnreadCount(chatRoom, unreadCount);
                 })
                 .collect(Collectors.toList());
@@ -147,7 +135,7 @@ public class ChatRoomService {
         return false;
     }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // 개인 채팅방 생성
     private ChatRoomDTO createDirectChatRoom(User user2, String roomName, String token) {
@@ -162,15 +150,20 @@ public class ChatRoomService {
             roomName = user2.getNickname();
         }
 
+        // 현재 시간(KST) 설정
+        LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+
+
         // 새 채팅방 생성
         ChatRoom chatRoom = ChatRoom.builder()
                 .roomId(roomId)
                 .roomName(roomName)
                 .roomType(ChatRoomType.DM)
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
 
         chatRoomRepository.save(chatRoom);
+
 
         // 참여자 추가
         chatParticipantsRepository.save(
@@ -198,12 +191,15 @@ public class ChatRoomService {
 
         String roomId = UUID.randomUUID().toString();
 
+        // 현재 시간(KST) 설정
+        LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+
         // 새 그룹 채팅방 생성
         ChatRoom chatRoom = ChatRoom.builder()
                 .roomId(roomId)
                 .roomName(roomName)
                 .roomType(ChatRoomType.GM)
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
 
         chatRoomRepository.save(chatRoom);
