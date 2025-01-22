@@ -8,7 +8,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user_entity")
+@Table(name = "user_entity", indexes = @Index(name = "idx_user_nickname", columnList = "nickname"))
 @Builder
 public class User {
     @Id
