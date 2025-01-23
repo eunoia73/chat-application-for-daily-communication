@@ -48,4 +48,12 @@ public class UserService{
         return profileImage;
     }
 
+    public boolean isValidEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public boolean isValidNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
 }
