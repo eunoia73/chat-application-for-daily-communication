@@ -200,9 +200,9 @@ public class ChatRoomService {
     }
 
     // 특정 채팅방의 사용자가 읽지 않은 메시지 개수 계산
-    private int countUnreadMessages(String roomId, String userId) {
+    private int countUnreadMessages(String roomId, String nickname) {
         return (int) chatMessageRepository.findAllByRoomId(roomId).stream()
-                .filter(message -> !message.getReaders().contains(userId))
+                .filter(message -> !message.getReaders().contains(nickname))
                 .count();
     }
 
