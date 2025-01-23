@@ -82,7 +82,7 @@ public class ChatRoomService {
                 .map(Optional::get)
                 .map(chatRoom -> {
                     int unreadCount = countUnreadMessages(chatRoom.getRoomId(), userNickname);
-                    return convertToDTOWithUnreadCount(chatRoom, unreadCount);
+                    return convertToDTO(chatRoom, unreadCount);
                 })
                 .collect(Collectors.toList());
     }
@@ -158,7 +158,7 @@ public class ChatRoomService {
                         .chatRole(ChatRole.MEMBER) // 일반 멤버
                         .build());
 
-        return convertToDTO(chatRoom);
+        return convertToDTO(chatRoom, 0);
     }
 
     // 그룹 채팅방 생성
@@ -206,8 +206,19 @@ public class ChatRoomService {
                 .count();
     }
 
+    // 마지막 메시지
+    private ChatMessage getLastMessage(String roomId) {
+        return chatMessageRepository.findFirstByRoomIdOrderByCreatedAtDesc(roomId);
+    }
+
+    // 마지막 메시지 시간
+    private LocalDateTime getLastMessageAt(String roomId) {
+        ChatMessage lastMessage = getLastMessage(roomId);
+        return (lastMessage != null) ? lastMessage.getCreatedAt() : null;
+    }
+
     // ChatRoom Entity -> DTO
-    private ChatRoomDTO convertToDTO(ChatRoom chatRoom) {
+    private ChatRoomDTO convertToDTO(ChatRoom chatRoom, int unreadCount) {
         // 참여자 정보를 추출 및 DTO 변환
         List<String> participantNickNames = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
                 .stream()
@@ -222,8 +233,8 @@ public class ChatRoomService {
                 .findFirst()
                 .orElse("Unknown");  // OWNER가 없으면 "Unknown"을 기본값으로 설정
 
-        // 최근 메시지 조회
-        ChatMessage lastMessage = chatMessageRepository.findFirstByRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
+        ChatMessage lastMessage = getLastMessage(chatRoom.getRoomId());
+        LocalDateTime lastMessageAt = getLastMessageAt(chatRoom.getRoomId());
 
         return ChatRoomDTO.builder()
                 .roomId(chatRoom.getRoomId())
@@ -233,6 +244,8 @@ public class ChatRoomService {
                 .createdAt(chatRoom.getCreatedAt())
                 .participants(participantNickNames)
                 .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
+                .lastMessageAt(lastMessageAt)
+                .unreadCount(unreadCount) // 읽지 않은 메시지 개수 추가
                 .build();
     }
 
@@ -245,34 +258,5 @@ public class ChatRoomService {
                 .build();
     }
 
-    // ChatRoom Entity -> DTO 변환 (읽지 않은 메시지 포함)
-    private ChatRoomDTO convertToDTOWithUnreadCount(ChatRoom chatRoom, int unreadCount) {
-        // 참여자 정보 추출
-        List<String> participantUserNickNames = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
-                .stream()
-                .map(chatParticipants -> chatParticipants.getUser().getNickname())
-                .collect(Collectors.toList());
 
-        // 방장 정보 추출
-        String ownerId = chatParticipantsRepository.findByChatRoomRoomId(chatRoom.getRoomId())
-                .stream()
-                .filter(participant -> participant.getChatRole() == ChatRole.OWNER)
-                .map(chatParticipants -> chatParticipants.getUser().getNickname())
-                .findFirst()
-                .orElse("Unknown");
-
-        // 최근 메시지 조회
-        ChatMessage lastMessage = chatMessageRepository.findFirstByRoomIdOrderByCreatedAtDesc(chatRoom.getRoomId());
-
-        return ChatRoomDTO.builder()
-                .roomId(chatRoom.getRoomId())
-                .roomName(chatRoom.getRoomName())
-                .ownerId(ownerId)
-                .roomType(chatRoom.getRoomType())
-                .createdAt(chatRoom.getCreatedAt())
-                .participants(participantUserNickNames)
-                .lastMessage(lastMessage != null ? lastMessage.getMessage() : null)
-                .unreadCount(unreadCount) // 읽지 않은 메시지 개수 추가
-                .build();
-    }
 }
