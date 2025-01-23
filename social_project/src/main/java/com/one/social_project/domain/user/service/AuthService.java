@@ -105,9 +105,11 @@ public class AuthService implements UserDetailsService {
         String accessToken = tokenProvider.createAccessToken(loginReqDto.getEmail());
         String refreshToken = tokenProvider.createRefreshToken(loginReqDto.getEmail());
 
-        response.addCookie(createCookie("Authorization", accessToken, true));
-// HttpServletResponse에 Authorization 헤더 적용
-        response.addHeader(HttpHeaders.AUTHORIZATION, "Bearer" + accessToken);
+        Cookie cookie = new Cookie("Authorization", "Bearer"+accessToken);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(24*60*60*60);
+        response.addCookie(cookie);
 
         return new LoginResDto(loginReqDto.getEmail(), accessToken, refreshToken);
     }
