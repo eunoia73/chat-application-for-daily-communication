@@ -1,5 +1,6 @@
 package com.one.social_project.domain.notifications.dto;
 
+import com.querydsl.core.annotations.QueryProjection;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -7,7 +8,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @SuperBuilder
-@AllArgsConstructor
 @NoArgsConstructor
 @ToString
 public class NotificationListDTO {
@@ -19,4 +19,14 @@ public class NotificationListDTO {
     private boolean isRead; // 읽음 여부
 
     private LocalDateTime createdAt;
+
+    @QueryProjection
+    public NotificationListDTO(Long id, String receiver, String sender, String message, boolean isRead, LocalDateTime createdAt) {
+        this.id = id;
+        this.receiver = receiver;
+        this.sender = sender;
+        this.message = message;
+        this.isRead = isRead;
+        this.createdAt = createdAt;
+    }
 }

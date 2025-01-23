@@ -8,10 +8,11 @@ import com.one.social_project.domain.notifications.error.NotificationNotFoundExc
 import com.one.social_project.domain.notifications.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -44,20 +45,8 @@ public class NotificationService {
     }
 
     //유저별 모든 알림 조회
-    public List<NotificationListDTO> getNotificationByUserNickname(String userNickname) {
-        List<Notification> notifications = notificationRepository.findByReceiver(userNickname);
-
-        // Entity -> DTO 변환
-        return notifications.stream()
-                .map(notification -> NotificationListDTO.builder()
-                        .id(notification.getId())
-                        .receiver(notification.getReceiver())
-                        .sender(notification.getSender())
-                        .message(notification.getMessage())
-                        .isRead(notification.isRead())
-                        .createdAt(notification.getCreatedAt())
-                        .build())
-                .collect(Collectors.toList());
+    public Page<NotificationListDTO> getNotificationByUserNickname(String userNickname, Pageable pageable) {
+        return notificationRepository.findByReceiver(userNickname, pageable);
     }
 
     //상세 알림 조회
