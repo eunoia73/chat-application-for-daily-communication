@@ -10,6 +10,7 @@ import com.one.social_project.domain.chat.entity.ChatRoom;
 import com.one.social_project.domain.chat.repository.mongo.ChatMessageRepository;
 import com.one.social_project.domain.chat.repository.ChatParticipantsRepository;
 import com.one.social_project.domain.chat.repository.ChatRoomRepository;
+import com.one.social_project.domain.notifications.service.NotificationService;
 import com.one.social_project.domain.user.entity.User;
 import com.one.social_project.domain.user.repository.UserRepository;
 import com.one.social_project.domain.user.util.TokenProvider;
@@ -35,6 +36,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatParticipantsRepository chatParticipantsRepository;
+    private final NotificationService notificationService;
 
     // 채팅방 생성 (개인 채팅방 또는 그룹 채팅방)
     public ChatRoomDTO createChatRoom(String roomName, List<String> participants) {
@@ -47,10 +49,17 @@ public class ChatRoomService {
                 }).collect(Collectors.toList());
         if (users.size() == 2) {
             // 개인 채팅방 생성
-            return createDirectChatRoom(users.get(0), users.get(1), roomName);
+            ChatRoomDTO chatRoomDTO = createDirectChatRoom(users.get(0), users.get(1), roomName);
+            // 알림 테이블 insert
+            notificationService.generateNotifications(chatRoomDTO);
+            return chatRoomDTO;
         } else if (users.size() > 2) {
             // 그룹 채팅방 생성
-            return createGroupChatRoom(roomName, users);
+            ChatRoomDTO chatRoomDTO = createGroupChatRoom(roomName, users);
+            // 알림 테이블 insert
+            notificationService.generateNotifications(chatRoomDTO);
+            return chatRoomDTO;
+
         } else {
             throw new IllegalArgumentException("참여자가 2명 이상이어야 합니다.");
         }
