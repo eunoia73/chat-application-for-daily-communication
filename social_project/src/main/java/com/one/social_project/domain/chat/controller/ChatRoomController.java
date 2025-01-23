@@ -6,6 +6,7 @@ import com.one.social_project.domain.chat.constant.ChatRoomType;
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ChatRoomService;
+import com.one.social_project.domain.notifications.service.NotificationService;
 import com.one.social_project.domain.user.util.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class ChatRoomController {
     private final TokenProvider tokenProvider;
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
+    private final NotificationService notificationService;
 
     // 채팅방 생성 (개인 채팅방 또는 그룹 채팅방)
     @PostMapping("/room")
@@ -43,6 +45,9 @@ public class ChatRoomController {
 
             ChatRoomDTO createdRoom = chatRoomService.createChatRoom(
                     token, chatRoomDTO.getRoomName(), chatRoomDTO.getParticipants());
+
+            //채팅방 정보로 알림 생성 및 저장
+            notificationService.generateNotifications(createdRoom);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(createdRoom);
 
