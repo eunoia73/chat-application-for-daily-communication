@@ -35,7 +35,6 @@ public class ChatMessageService {
 
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
         return savedMessage.getId();
-
     }
 
     // 채팅방별 채팅 기록 조회
