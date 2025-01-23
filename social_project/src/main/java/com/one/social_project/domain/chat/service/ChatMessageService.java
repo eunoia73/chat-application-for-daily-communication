@@ -21,7 +21,6 @@ import java.util.List;
 public class ChatMessageService {
     private final ChatMessageRepository chatMessageRepository;
 
-
     // 채팅 저장
     public String saveMessage(String roomId, String sender, String message) {
         LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
@@ -36,9 +35,7 @@ public class ChatMessageService {
 
         ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
         return savedMessage.getId();
-
     }
-
 
     // 채팅방별 채팅 기록 조회
     public Page<ChatMessage> getMessages(String roomId, Pageable pageable) {
