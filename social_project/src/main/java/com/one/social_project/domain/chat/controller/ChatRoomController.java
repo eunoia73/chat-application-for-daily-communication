@@ -6,7 +6,6 @@ import com.one.social_project.domain.chat.constant.ChatRoomType;
 import com.one.social_project.domain.chat.entity.ChatMessage;
 import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ChatRoomService;
-import com.one.social_project.domain.user.util.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,30 +24,34 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChatRoomController {
 
-    private final TokenProvider tokenProvider;
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
 
     // 채팅방 생성 (개인 채팅방 또는 그룹 채팅방)
     @PostMapping("/room")
     public ResponseEntity<ChatRoomDTO> createChatRoom(
-            @RequestHeader("Authorization") String authHeader,
             @RequestBody ChatRoomDTO chatRoomDTO) {
 
-        try {
-            String token = authHeader.substring(7);
-            String createrNickname = tokenProvider.getNicknameFromToken(token);
+        ChatRoomDTO createdRoom;
 
-            validateChatRoomRequest(chatRoomDTO, createrNickname);
-
-            ChatRoomDTO createdRoom = chatRoomService.createChatRoom(
-                    token, chatRoomDTO.getRoomName(), chatRoomDTO.getParticipants());
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdRoom);
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "채팅방을 생성 중 오류 발생", e);
+        // 채팅방 유형에 따른 처리
+        if (chatRoomDTO.getRoomType() == ChatRoomType.DM) {
+            // 개인 채팅방 생성 : 참여자 2명만 허용
+            if (chatRoomDTO.getParticipants() == null || chatRoomDTO.getParticipants().size() != 2) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "개인 채팅 참여자는 2명이어야 합니다.");
+            }
+            createdRoom = chatRoomService.createChatRoom(chatRoomDTO.getRoomName(), chatRoomDTO.getParticipants());
+        } else if (chatRoomDTO.getRoomType() == ChatRoomType.GM) {
+            // 그룹 채팅방 생성 : 참여자 3명 이상 필요
+            if (chatRoomDTO.getParticipants() == null || chatRoomDTO.getParticipants().size() < 3) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "그룹 채팅 참여자는 최소 3명 이상이어야 합니다.");
+            }
+            createdRoom = chatRoomService.createChatRoom(chatRoomDTO.getRoomName(), chatRoomDTO.getParticipants());
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "올바르지 않은 방 유형 입니다: " + chatRoomDTO.getRoomType());
         }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdRoom);
     }
 
     // 특정 채팅방의 메시지 조회
@@ -91,24 +94,5 @@ public class ChatRoomController {
             }else{
                 return ResponseEntity.ok(nickName + "님이 채팅방에서 나갔습니다.");
             }
-    }
-
-    private void validateChatRoomRequest(ChatRoomDTO chatRoomDTO, String createdNickname){
-        if(!chatRoomDTO.getParticipants().contains(createdNickname)){
-            chatRoomDTO.getParticipants().add(createdNickname);
-        }
-
-        // 채팅방 유형에 따른 검증
-        if (chatRoomDTO.getRoomType() == ChatRoomType.DM) {
-            if (chatRoomDTO.getParticipants() == null || chatRoomDTO.getParticipants().size() != 2) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "개인 채팅 참여자는 2명이어야 합니다.");
-            }
-        } else if (chatRoomDTO.getRoomType() == ChatRoomType.GM) {
-            if (chatRoomDTO.getParticipants() == null || chatRoomDTO.getParticipants().size() < 3) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "그룹 채팅 참여자는 최소 3명 이상이어야 합니다.");
-            }
-        } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "올바르지 않은 방 유형입니다: " + chatRoomDTO.getRoomType());
-        }
     }
 }
