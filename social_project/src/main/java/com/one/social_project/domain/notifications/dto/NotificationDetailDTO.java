@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class NotificationDTO {
+public class NotificationDetailDTO {
     private Long id;
     private String receiver; // 알림 수신자
     private String sender;  //알림 발신자

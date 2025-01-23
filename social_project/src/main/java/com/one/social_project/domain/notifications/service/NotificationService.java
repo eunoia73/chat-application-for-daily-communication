@@ -1,7 +1,7 @@
 package com.one.social_project.domain.notifications.service;
 
 import com.one.social_project.domain.chat.dto.ChatRoomDTO;
-import com.one.social_project.domain.notifications.dto.NotificationDTO;
+import com.one.social_project.domain.notifications.dto.NotificationDetailDTO;
 import com.one.social_project.domain.notifications.dto.NotificationListDTO;
 import com.one.social_project.domain.notifications.entity.Notification;
 import com.one.social_project.domain.notifications.error.NotificationNotFoundException;
@@ -50,7 +50,7 @@ public class NotificationService {
     }
 
     //상세 알림 조회
-    public NotificationDTO getDetailNotification(String userNickname, Long id) {
+    public NotificationDetailDTO getDetailNotification(String userNickname, Long id) {
 
         // 알림을 데이터베이스에서 조회
         Notification notification = notificationRepository.findById(id)
@@ -68,7 +68,7 @@ public class NotificationService {
         }
 
         // Entity -> DTO 변환
-        NotificationDTO notificationDTO = NotificationDTO.builder()
+        NotificationDetailDTO notificationDTO = NotificationDetailDTO.builder()
                 .id(notification.getId())
                 .receiver(notification.getReceiver())
                 .sender(notification.getSender())
