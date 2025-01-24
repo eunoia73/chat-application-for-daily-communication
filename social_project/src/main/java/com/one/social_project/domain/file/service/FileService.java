@@ -4,9 +4,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
 import com.one.social_project.domain.chat.entity.ChatParticipants;
-import com.one.social_project.domain.chat.entity.ChatRoom;
 import com.one.social_project.domain.chat.repository.ChatParticipantsRepository;
-import com.one.social_project.domain.chat.repository.ChatRoomRepository;
 import com.one.social_project.domain.file.FileUtil;
 import com.one.social_project.domain.file.dto.ChatFileDTO;
 import com.one.social_project.domain.file.dto.FileDTO;
@@ -68,30 +66,34 @@ public class FileService {
      */
     public FileDTO uploadFile(FileDTO fileDTO) throws IOException {
 
-        //유저가 room에 속한 참여자인지 확인
-        String roomId = ((ChatFileDTO) fileDTO).getRoomId();
-        log.info("roomId={}", roomId);
-        List<ChatParticipants> participants = chatParticipantsRepository.findByChatRoomRoomId(roomId);
+        String fileId = UUID.randomUUID().toString();
 
-        log.info("/n participants={}", participants);
-        String nickname = ((ChatFileDTO) fileDTO).getNickname();
-        log.info("nickname={}", nickname);
-        boolean isNicknamePresent = participants.stream()
-                .anyMatch(participant -> participant.getUser().getNickname().equals(nickname));
+        //category가 CHAT이면, 유저가 room에 속한 참여자인지 확인
+        if (fileDTO.getCategory() == FileCategory.CHAT) {
+            String roomId = ((ChatFileDTO) fileDTO).getRoomId();
+            log.info("roomId={}", roomId);
+            List<ChatParticipants> participants = chatParticipantsRepository.findByChatRoomRoomId(roomId);
+
+            log.info("/n participants={}", participants);
+            String nickname = ((ChatFileDTO) fileDTO).getNickname();
+            log.info("nickname={}", nickname);
+            boolean isNicknamePresent = participants.stream()
+                    .anyMatch(participant -> participant.getUser().getNickname().equals(nickname));
 
 
-        if (isNicknamePresent) {
-            log.info("Nickname {} is present in participants", nickname);
-        } else {
-            log.info("Nickname {} is NOT present in participants", nickname);
-            throw new IllegalArgumentException("파일 업로드 권한이 없습니다.");
+            if (isNicknamePresent) {
+                log.info("Nickname {} is present in participants", nickname);
+            } else {
+                log.info("Nickname {} is NOT present in participants", nickname);
+                throw new IllegalArgumentException("파일 업로드 권한이 없습니다.");
+            }
         }
 
         //파일 검증
         fileUtil.validateFile(fileDTO);
 
         //1. 파일 이름 변경, url 생성
-        String fileName = generateFileName(fileDTO);
+        String fileName = generateFileName(fileId, fileDTO);
         String originFileUrl = defaultUrl + fileName;
 
         //2. 파일 업로드
@@ -109,6 +111,7 @@ public class FileService {
 
         //3. 파일 DTO를 Entity로 변환하여 db에 저장
         File file = File.builder()
+                .fileId(fileId)
                 .fileName(fileName)
                 .fileType(fileDTO.getFileType())
                 .fileSize(fileDTO.getFileSize())
@@ -117,7 +120,7 @@ public class FileService {
                 .expiredAt(convertToLocalDateTime(putObjectResult.getExpirationTime()))
                 .category(fileDTO.getCategory())
                 .nickname(fileDTO.getNickname())
-                .roomId(fileDTO instanceof ChatFileDTO ? roomId : null)  // chat일 때만 roomId 설정
+                .roomId(fileDTO instanceof ChatFileDTO ? ((ChatFileDTO) fileDTO).getRoomId() : null)  // chat일 때만 roomId 설정
                 .build();
         File saved = fileRepository.save(file);
 
@@ -127,7 +130,7 @@ public class FileService {
         //4. 저장된 Entity를 DTO로 변환
         if (file.getCategory() == FileCategory.PROFILE) {
             savedDTO = ProfileFileDTO.builder()
-                    .id(saved.getId())
+                    .fileId(saved.getFileId())
                     .fileName(saved.getFileName())
                     .fileType(saved.getFileType())
                     .fileSize(saved.getFileSize())
@@ -141,7 +144,7 @@ public class FileService {
 
         } else if (file.getCategory() == FileCategory.CHAT) {
             savedDTO = ChatFileDTO.builder()
-                    .id(saved.getId())
+                    .fileId(saved.getFileId())
                     .fileName(saved.getFileName())
                     .fileType(saved.getFileType())
                     .fileSize(saved.getFileSize())
@@ -151,7 +154,7 @@ public class FileService {
                     .expiredAt(saved.getExpiredAt())
                     .nickname(saved.getNickname())
                     .category(FileCategory.CHAT)
-                    .roomId(roomId)  // roomId ChatFileDTO에서 가져오기
+                    .roomId(((ChatFileDTO) fileDTO).getRoomId())  // roomId ChatFileDTO에서 가져오기
                     .build();
 
         }
@@ -175,8 +178,8 @@ public class FileService {
     }
 
     //파일 이름 생성
-    private String generateFileName(FileDTO fileDTO) {
-        return UUID.randomUUID() + "_" + fileDTO.getFileName();
+    private String generateFileName(String fileId, FileDTO fileDTO) {
+        return fileId + "_" + fileDTO.getFileName();
     }
 
     // 파일 확장자 추출
@@ -199,10 +202,10 @@ public class FileService {
      * @param fileId
      * @return
      */
-    public int deleteFile(Long fileId) {
+    public int deleteFile(String fileId) {
 
         //1. 파일 아이디로 파일 찾기
-        File file = fileRepository.findById(fileId)
+        File file = fileRepository.findByFileId(fileId)
                 .orElseThrow(() -> new FileNotFoundException("해당 파일이 존재하지 않습니다. id=" + fileId));
 
         try {
@@ -216,7 +219,7 @@ public class FileService {
             fileRepository.delete(file);
 
             // 파일이 DB에 여전히 존재하거나 S3에서 삭제되지 않았다면 실패 처리
-            if (fileRepository.existsById(fileId) || s3Client.doesObjectExist(bucketName, file.getFileName())) {
+            if (fileRepository.existsByFileId(fileId) || s3Client.doesObjectExist(bucketName, file.getFileName())) {
                 return 0;  // 삭제 실패
             }
 
@@ -237,15 +240,15 @@ public class FileService {
      * @return
      */
 
-    public FileDTO getFile(Long fileId) {
-        File file = fileRepository.findById(fileId)
+    public FileDTO getFile(String fileId) {
+        File file = fileRepository.findByFileId(fileId)
                 .orElseThrow(() -> new FileNotFoundException("해당 파일이 존재하지 않습니다. id=" + fileId));
 
         FileDTO fileDTO = null;
 
         if (file.getCategory() == FileCategory.PROFILE) {
             fileDTO = ProfileFileDTO.builder()
-                    .id(file.getId())
+                    .fileId(file.getFileId())
                     .fileName(file.getFileName())
                     .fileType(file.getFileType())
                     .fileSize(file.getFileSize())
@@ -259,7 +262,7 @@ public class FileService {
 
         } else if (file.getCategory() == FileCategory.CHAT) {
             fileDTO = ChatFileDTO.builder()
-                    .id(file.getId())
+                    .fileId(file.getFileId())
                     .fileName(file.getFileName())
                     .fileType(file.getFileType())
                     .fileSize(file.getFileSize())
@@ -283,9 +286,9 @@ public class FileService {
      * @return
      * @throws IOException
      */
-    public byte[] downloadFile(Long fileId) throws IOException {
+    public byte[] downloadFile(String fileId) throws IOException {
 
-        File file = fileRepository.findById(fileId)
+        File file = fileRepository.findByFileId(fileId)
                 .orElseThrow(() -> new FileNotFoundException("해당 파일이 존재하지 않습니다. id=" + fileId));
 
         //만약 파일 만료 기간이 지났다면?

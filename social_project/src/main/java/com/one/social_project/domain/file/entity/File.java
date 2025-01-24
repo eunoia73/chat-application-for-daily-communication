@@ -24,6 +24,9 @@ public class File {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String fileId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FileCategory category;  // ENUM 타입으로 파일 카테고리 설정
