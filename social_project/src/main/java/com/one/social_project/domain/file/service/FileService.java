@@ -3,6 +3,10 @@ package com.one.social_project.domain.file.service;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
+import com.one.social_project.domain.chat.entity.ChatParticipants;
+import com.one.social_project.domain.chat.entity.ChatRoom;
+import com.one.social_project.domain.chat.repository.ChatParticipantsRepository;
+import com.one.social_project.domain.chat.repository.ChatRoomRepository;
 import com.one.social_project.domain.file.FileUtil;
 import com.one.social_project.domain.file.dto.ChatFileDTO;
 import com.one.social_project.domain.file.dto.FileDTO;
@@ -21,10 +25,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static com.one.social_project.domain.file.FileUtil.ALLOWED_EXTENSIONS_IMAGE;
 
@@ -34,6 +35,7 @@ import static com.one.social_project.domain.file.FileUtil.ALLOWED_EXTENSIONS_IMA
 public class FileService {
 
     private final FileRepository fileRepository;
+    private final ChatParticipantsRepository chatParticipantsRepository;
     private final FileUtil fileUtil;
     private final AmazonS3 s3Client;
 
@@ -66,6 +68,25 @@ public class FileService {
      */
     public FileDTO uploadFile(FileDTO fileDTO) throws IOException {
 
+        //유저가 room에 속한 참여자인지 확인
+        String roomId = ((ChatFileDTO) fileDTO).getRoomId();
+        log.info("roomId={}", roomId);
+        List<ChatParticipants> participants = chatParticipantsRepository.findByChatRoomRoomId(roomId);
+
+        log.info("/n participants={}", participants);
+        String nickname = ((ChatFileDTO) fileDTO).getNickname();
+        log.info("nickname={}", nickname);
+        boolean isNicknamePresent = participants.stream()
+                .anyMatch(participant -> participant.getUser().getNickname().equals(nickname));
+
+
+        if (isNicknamePresent) {
+            log.info("Nickname {} is present in participants", nickname);
+        } else {
+            log.info("Nickname {} is NOT present in participants", nickname);
+            throw new IllegalArgumentException("파일 업로드 권한이 없습니다.");
+        }
+
         //파일 검증
         fileUtil.validateFile(fileDTO);
 
@@ -96,7 +117,7 @@ public class FileService {
                 .expiredAt(convertToLocalDateTime(putObjectResult.getExpirationTime()))
                 .category(fileDTO.getCategory())
                 .nickname(fileDTO.getNickname())
-                .roomId(fileDTO instanceof ChatFileDTO ? ((ChatFileDTO) fileDTO).getRoomId() : null)  // chat일 때만 roomId 설정
+                .roomId(fileDTO instanceof ChatFileDTO ? roomId : null)  // chat일 때만 roomId 설정
                 .build();
         File saved = fileRepository.save(file);
 
@@ -130,7 +151,7 @@ public class FileService {
                     .expiredAt(saved.getExpiredAt())
                     .nickname(saved.getNickname())
                     .category(FileCategory.CHAT)
-                    .roomId(((ChatFileDTO) fileDTO).getRoomId())  // roomId ChatFileDTO에서 가져오기
+                    .roomId(roomId)  // roomId ChatFileDTO에서 가져오기
                     .build();
 
         }
