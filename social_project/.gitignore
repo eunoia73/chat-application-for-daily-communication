@@ -38,3 +38,8 @@ out/
 
 
 application-secret.properties
+
+
+mongodb_data/
+mysql_data/
+redis_data/
