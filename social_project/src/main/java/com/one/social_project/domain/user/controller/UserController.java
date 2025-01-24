@@ -37,6 +37,11 @@ public class UserController {
 
     @GetMapping("/check/email/{email}")
     public ResponseEntity<Boolean> checkEmail(@PathVariable("email") String email) {
-        return ResponseEntity.ok(userService.isValidEmail(email));
+        return ResponseEntity.ok(!userService.isValidEmail(email));
+    }
+
+    @GetMapping("/check/nickname/{nickname}")
+    public ResponseEntity<Boolean> checkNickname(@PathVariable("nickname") String nickname) {
+        return ResponseEntity.ok(!userService.isValidNickname(nickname));
     }
 }
