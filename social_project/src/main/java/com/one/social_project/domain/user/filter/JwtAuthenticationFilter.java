@@ -1,22 +1,33 @@
 package com.one.social_project.domain.user.filter;
 
-import com.one.social_project.domain.user.entity.User;
-import com.one.social_project.domain.user.service.BlacklistService;
-import com.one.social_project.domain.user.util.TokenProvider;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import java.io.IOException;
+
+import com.one.social_project.domain.user.entity.User;
+import com.one.social_project.domain.user.service.BlacklistService;
+import com.one.social_project.domain.user.util.TokenProvider;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final int BEARER_PREFIX_LENGTH = 7;
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final TokenProvider tokenProvider;
     private final BlacklistService blacklistService;
@@ -26,53 +37,69 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.blacklistService = blacklistService;
     }
 
-    // 요청이 들어올 때마다 필터가 호출됨
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
-        // HTTP 요청에서 Authorization 헤더를 가져옴
-        String token = getTokenFromRequest(request);
-
-        if(blacklistService.isTokenBlacklisted(token))
-        {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is blacklisted");
-            return;
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                  @NonNull HttpServletResponse response,
+                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
+        try {
+            String token = getTokenFromRequest(request);
+            if (token != null) {
+                processToken(token, request, response);
+            }
+        } catch (Exception e) {
+            handleFilterException(e);
         }
-
-
-
-        if (token != null && tokenProvider.validateAccessToken(token)) {
-
-            // 유효한 토큰이면, 토큰에서 사용자 정보(email)를 가져옴
-            User user = tokenProvider.getUserFromToken(token);
-
-            // 해당 사용자 정보를 기반으로 Authentication 객체 생성
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    user, null, null // 사용자 정보는 Username만 가지고 인증
-            );
-
-            // Authentication 객체를 SecurityContext에 설정
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            // SecurityContextHolder에 현재 인증 정보를 설정
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
-
-        // 다음 필터로 요청을 전달
+        
         filterChain.doFilter(request, response);
     }
 
-    // HTTP 요청에서 Authorization 헤더를 가져오는 메서드
-    private String getTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
+    private void processToken(String token, HttpServletRequest request, HttpServletResponse response) 
+            throws IOException {
+        if (isTokenBlacklisted(token, response)) {
+            return;
+        }
 
-        if (bearerToken != null && bearerToken.startsWith("Bearer")) {
-            return bearerToken.substring(6);  // "Bearer " 부분을 잘라냄
+        authenticateToken(token, request);
+    }
+
+    private boolean isTokenBlacklisted(String token, HttpServletResponse response) throws IOException {
+        if (blacklistService.isTokenBlacklisted(token)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is blacklisted");
+            return true;
+        }
+        return false;
+    }
+
+    private void authenticateToken(String token, HttpServletRequest request) {
+        if (tokenProvider.validateAccessToken(token)) {
+            User user = tokenProvider.getUserFromToken(token);
+            setSecurityContext(user, request);
+        }
+    }
+
+    private void setSecurityContext(User user, HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken authentication = 
+            new UsernamePasswordAuthenticationToken(user, null, null);
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private String getTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+
+        if (bearerToken != null && bearerToken.startsWith(BEARER_PREFIX)) {
+            return bearerToken.substring(BEARER_PREFIX_LENGTH);
         }
         return null;
     }
 
-
+    private void handleFilterException(Exception e) {
+        if (e instanceof IllegalArgumentException) {
+            logger.error("토큰 검증 중 오류 발생: {}", e.getMessage());
+        } else if (e instanceof RedisConnectionFailureException) {
+            logger.error("Redis 연결 오류 발생: {}", e.getMessage());
+        } else {
+            logger.error("예상치 못한 오류 발생: {}", e.getMessage());
+        }
+    }
 }
