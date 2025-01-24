@@ -43,6 +43,9 @@ public class FileController {
      * @throws IOException
      */
 
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 단일 파일 크기 제한: 10MB
+    private static final long MAX_REQUEST_SIZE = 50 * 1024 * 1024; // 전체 요청 크기 제한: 50MB
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFiles(@RequestPart("file") List<MultipartFile> files,
                                          @RequestParam("category") String category,
@@ -50,6 +53,7 @@ public class FileController {
                                          @RequestParam(value = "roomId", required = false) String roomId) throws IOException {
 
         String nickname = user.getNickname();  //유저정보 꺼내오기
+        long totalRequestSize = 0;
 
         List<FileDTO> uploadedFiles = new ArrayList<>();
 
@@ -70,6 +74,18 @@ public class FileController {
             // 파일이 비어있는지 검증
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body("파일이 비어있습니다.");
+            }
+
+            // 개별 파일 크기 검증
+            if (file.getSize() > MAX_FILE_SIZE) {
+                return ResponseEntity.badRequest().body("파일 크기가 10MB를 초과했습니다: " + file.getOriginalFilename());
+            }
+
+            // 전체 요청 크기 계산
+            totalRequestSize += file.getSize();
+            // 전체 요청 크기 검증
+            if (totalRequestSize > MAX_REQUEST_SIZE) {
+                return ResponseEntity.badRequest().body("전체 요청 크기가 50MB를 초과했습니다.");
             }
 
             // 파일 이름 HTML 태그 방지
@@ -186,8 +202,8 @@ public class FileController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "thumbnail이 존재하지 않는 파일입니다."));
         }
-        log.info("fileDTO.getThumbNailUrl={}",fileDTO.getThumbNailUrl());
-        log.info("fileDTO.getFileType={}",fileDTO.getFileType());
+        log.info("fileDTO.getThumbNailUrl={}", fileDTO.getThumbNailUrl());
+        log.info("fileDTO.getFileType={}", fileDTO.getFileType());
 
         // 파일이 Profile일 경우
         if (fileDTO instanceof ProfileFileDTO) {
