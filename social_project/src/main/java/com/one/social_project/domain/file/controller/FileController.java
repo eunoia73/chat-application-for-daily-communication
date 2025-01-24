@@ -33,7 +33,6 @@ import static com.one.social_project.domain.file.FileUtil.ALLOWED_EXTENSIONS_IMA
 public class FileController {
 
     private final FileService fileService;
-    private final ChatRoomService chatRoomService;
 
     /**
      * 파일 업로드
