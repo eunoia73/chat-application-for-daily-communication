@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @ToString
 public class FileDTO {
 
-    private Long id;
+    private String fileId;
     private String nickname;
     private String fileName;
     private String fileType;

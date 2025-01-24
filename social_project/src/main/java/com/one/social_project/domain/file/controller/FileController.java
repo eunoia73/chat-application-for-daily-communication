@@ -138,7 +138,7 @@ public class FileController {
      * @return
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteFile(@PathVariable("id") Long id) {
+    public ResponseEntity<?> deleteFile(@PathVariable("id") String id) {
         int result = fileService.deleteFile(id);
         if (result == 0) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
