@@ -13,8 +13,8 @@ public class QNotificationListDTO extends ConstructorExpression<NotificationList
 
     private static final long serialVersionUID = 532819945L;
 
-    public QNotificationListDTO(com.querydsl.core.types.Expression<Long> id, com.querydsl.core.types.Expression<String> receiver, com.querydsl.core.types.Expression<String> sender, com.querydsl.core.types.Expression<String> message, com.querydsl.core.types.Expression<Boolean> isRead, com.querydsl.core.types.Expression<java.time.LocalDateTime> createdAt) {
-        super(NotificationListDTO.class, new Class<?>[]{long.class, String.class, String.class, String.class, boolean.class, java.time.LocalDateTime.class}, id, receiver, sender, message, isRead, createdAt);
+    public QNotificationListDTO(com.querydsl.core.types.Expression<Long> id, com.querydsl.core.types.Expression<String> notificationId, com.querydsl.core.types.Expression<String> receiver, com.querydsl.core.types.Expression<String> sender, com.querydsl.core.types.Expression<String> message, com.querydsl.core.types.Expression<Boolean> isRead, com.querydsl.core.types.Expression<java.time.LocalDateTime> createdAt) {
+        super(NotificationListDTO.class, new Class<?>[]{long.class, String.class, String.class, String.class, String.class, boolean.class, java.time.LocalDateTime.class}, id, notificationId, receiver, sender, message, isRead, createdAt);
     }
 
 }

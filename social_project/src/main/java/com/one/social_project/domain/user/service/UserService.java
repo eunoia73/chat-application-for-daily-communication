@@ -2,6 +2,7 @@ package com.one.social_project.domain.user.service;
 
 import java.util.List;
 
+import com.one.social_project.domain.user.dto.util.CheckDto;
 import org.springframework.stereotype.Service;
 
 import com.one.social_project.domain.user.dto.user.UserDto;
@@ -51,12 +52,17 @@ public class UserService{
                 .toList();
     }
 
-    public boolean isValidEmail(String email) {
-        return userRepository.existsByEmail(email);
+    public CheckDto isValidEmail(String email) {
+        CheckDto checkDto = new CheckDto();
+        checkDto.setResult(userRepository.findByEmail(email).isPresent());
+        return checkDto;
     }
 
-    public boolean isValidNickname(String nickname) {
-        return userRepository.existsByNickname(nickname);
+    public CheckDto isValidNickname(String nickname) {
+        CheckDto checkDto = new CheckDto();
+        checkDto.setResult(userRepository.findByNickname(nickname).isPresent());
+        return checkDto;
+
     }
 
 }
