@@ -105,8 +105,7 @@ public class FriendshipService {
         List<WaitingFriendListDto> result = new ArrayList<>();
 
         for (Friendship x : friendshipList) {
-            // 보낸 요청이 아니고 && 수락 대기중인 요청만 조회
-            if (!x.isFrom() && x.getStatus() == FriendshipStatus.ACCEPT) {
+            if (x.getStatus() == FriendshipStatus.ACCEPT) {
                 User friend = userRepository.findByEmail(x.getFriendEmail()).orElseThrow(() -> new Exception("회원 조회 실패"));
                 WaitingFriendListDto dto = WaitingFriendListDto.builder()
                         .friendshipId(x.getId())

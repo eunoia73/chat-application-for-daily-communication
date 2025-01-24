@@ -33,9 +33,9 @@ public class FriendshipController {
         return friendshipService.getAcceptFriendList(user.getEmail());
     }
 
-    @PostMapping("/approve/{friendshipId}")
+    @PostMapping("/approve/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public String approveFriendship (@Valid @PathVariable("friendshipId") Long friendshipId) throws Exception{
+    public String approveFriendship (@Valid @PathVariable("id") Long friendshipId) throws Exception{
         return friendshipService.approveFriendshipRequest(friendshipId);
     }
 }
