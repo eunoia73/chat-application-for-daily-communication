@@ -113,6 +113,8 @@ public class AuthService implements UserDetailsService {
         cookie.setHttpOnly(true);
         cookie.setPath("/");
         cookie.setMaxAge(24*60*60*60);
+
+        response.setHeader("Authorization", "Bearer"+accessToken);
         response.addCookie(cookie);
 
         return new LoginResDto(loginReqDto.getEmail(), accessToken, refreshToken);
