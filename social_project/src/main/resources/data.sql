@@ -11,6 +11,12 @@ VALUES
 ('구글사용자', 'google@gmail.com', null, false, 'ROLE_USER', 'google.jpg', true, 'google', 'google123', null),
 ('카카오사용자', 'kakao@kakao.com', null, false, 'ROLE_USER', 'kakao.jpg', true, 'kakao', 'kakao123', null);
 
+-- 채팅방 --
+INSERT INTO room (id, room_id, room_name, room_type, created_at)
+VALUES
+(1, 'a9530082-0587-44f8-b1c2-d5189e4cec7d', '그룹 채팅방', 'GM', NOW()),
+(2, '78a56e67-322d-40b6-bc45-b1002ffd93ff','개인 채팅방', 'DM', NOW());
+
 -- 친구 관계 샘플 데이터
 INSERT INTO friendship (user_id, friend_id, status, created_at)
 VALUES 
