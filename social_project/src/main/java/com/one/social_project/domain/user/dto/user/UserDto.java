@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.util.List;
 
+import static com.one.social_project.domain.user.entity.QUser.user;
+
 @Data
 @RequiredArgsConstructor
 @AllArgsConstructor
@@ -45,4 +47,5 @@ public class UserDto {
                 .friendshipList(friendshipList)
                 .build();
     }
+
 }

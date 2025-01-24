@@ -7,45 +7,32 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: elice1234
       MYSQL_DATABASE: mydb
-      MYSQL_USER: user
+      MYSQL_USER: elice
       MYSQL_PASSWORD: elice1234
     ports:
-      - "3307:3306"  # 외부에서 3307 포트로 접속
+      - "3306:3306"  # 외부에서 3307 포트로 접속
     volumes:
-      - mysql_data:/var/lib/mysql  # MySQL 데이터 지속성
-    networks:
-      - my_network
+      - ./mysql_data:/var/lib/mysql  # MySQL 데이터 지속성
 
-  # Spring 애플리케이션 서비스
-  app:
-    build: src/main/java
-    depends_on:
-      - mysql
-      - redis
-    ports:
-      - "8080:8080"  # Spring 애플리케이션이 8080 포트를 사용
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydb
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: elice1234
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-    networks:
-      - my_network
-    restart: unless-stopped
+      MONGO_INITDB_ROOT_USERNAME: elice
+      MONGO_INITDB_ROOT_PASSWORD: elice1234
+      MONGO_INITDB_DATABASE: chatdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongodb_data:/data/db
 
   # Redis 서비스
   redis:
     image: redis:latest
+    container_name: redis
     ports:
-      - "6379:6379"  # Redis 포트 6379
-    networks:
-      - my_network
-
-networks:
-  my_network:
-    driver: bridge
-
-volumes:
-  mysql_data:
-    driver: local
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    command: redis-server --requirepass elice1234  # Redis 비밀번호 설정

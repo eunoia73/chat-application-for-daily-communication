@@ -61,7 +61,11 @@ public class SecurityConfig {
             "/chat/**",
             "/h2-console/**",
             "/files/**",
-            "/api/login/oauth2/**"};
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/api/login/oauth2/**"
+
+    };
 
     // 인증 과정이 필요하여
     // 인증 없이 요청한 경우 401 Error 반환

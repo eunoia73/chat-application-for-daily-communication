@@ -1,12 +1,25 @@
 package com.one.social_project.domain.user.entity;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.one.social_project.domain.friend.entity.Friendship;
+import com.one.social_project.domain.user.dto.response.UserDtoResponse;
 import com.one.social_project.domain.user.dto.user.UserDto;
-import jakarta.persistence.*;
-import lombok.*;
 
-import java.util.List;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -75,5 +88,9 @@ public class User {
                 .oauthId(oauthId)
                 .oauthToken(oauthToken)
                 .build();
+    }
+
+    public UserDtoResponse toResponseDto() {
+        return UserDtoResponse.from(this);
     }
 }
