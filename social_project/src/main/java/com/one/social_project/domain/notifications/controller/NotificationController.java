@@ -50,10 +50,10 @@ public class NotificationController {
     //상세 알림 조회
     @GetMapping("/api/users/notifications/{id}")
     public ResponseEntity<?> getDetailNotification(@AuthenticationPrincipal User user,
-                                                   @PathVariable("id") Long id) {
+                                                   @PathVariable("id") String notificationId) {
 
         String userNickname = user.getNickname();
-        NotificationDetailDTO detailNotification = notificationService.getDetailNotification(userNickname, id);
+        NotificationDetailDTO detailNotification = notificationService.getDetailNotification(userNickname, notificationId);
 
         // 알림이 없는 경우
         if (detailNotification == null) {
