@@ -242,8 +242,8 @@ public class FileService {
      * @return
      */
 
-    public FileDTO getFile(Long fileId) {
-        File file = fileRepository.findById(fileId)
+    public FileDTO getFile(String fileId) {
+        File file = fileRepository.findByFileId(fileId)
                 .orElseThrow(() -> new FileNotFoundException("해당 파일이 존재하지 않습니다. id=" + fileId));
 
         FileDTO fileDTO = null;
@@ -288,9 +288,9 @@ public class FileService {
      * @return
      * @throws IOException
      */
-    public byte[] downloadFile(Long fileId) throws IOException {
+    public byte[] downloadFile(String fileId) throws IOException {
 
-        File file = fileRepository.findById(fileId)
+        File file = fileRepository.findByFileId(fileId)
                 .orElseThrow(() -> new FileNotFoundException("해당 파일이 존재하지 않습니다. id=" + fileId));
 
         //만약 파일 만료 기간이 지났다면?

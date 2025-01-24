@@ -154,12 +154,12 @@ public class FileController {
     /**
      * 파일 조회 - 원본
      *
-     * @param id
+     * @param fileId
      * @return
      */
-    @GetMapping("/{id}/original")
-    public ResponseEntity<?> getOriginalFile(@PathVariable("id") Long id) {
-        FileDTO fileDTO = fileService.getFile(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOriginalFile(@PathVariable("id") String fileId) {
+        FileDTO fileDTO = fileService.getFile(fileId);
         if (fileDTO == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "파일이 존재하지 않습니다."));
@@ -182,57 +182,57 @@ public class FileController {
         return ResponseEntity.ok(fileDTO);
     }
 
-    /**
-     * 파일조회 - 썸네일
-     *
-     * @param id
-     * @return
-     */
-    @GetMapping("/{id}/thumbnail")
-    public ResponseEntity<?> getThumbnailFile(@PathVariable("id") Long id) {
-        FileDTO fileDTO = fileService.getFile(id);
-
-        if (fileDTO == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "파일이 존재하지 않습니다."));
-        }
-
-        if (fileDTO.getThumbNailUrl() == null && !ALLOWED_EXTENSIONS_IMAGE.contains(fileDTO.getFileType())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "thumbnail이 존재하지 않는 파일입니다."));
-        }
-        log.info("fileDTO.getThumbNailUrl={}", fileDTO.getThumbNailUrl());
-        log.info("fileDTO.getFileType={}", fileDTO.getFileType());
-
-        // 파일이 Profile일 경우
-        if (fileDTO instanceof ProfileFileDTO) {
-            return ResponseEntity.ok(fileDTO);  // ProfileFileDTO 반환
-        }
-
-        // 파일이 Chat일 경우
-        if (fileDTO instanceof ChatFileDTO) {
-            // ChatFileDTO에서 roomId가 있는지 확인
-            if (((ChatFileDTO) fileDTO).getRoomId() == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "Chat 파일에 필요한 roomId가 없습니다."));
-            }
-            return ResponseEntity.ok(fileDTO);  // ChatFileDTO 반환
-        }
-
-        return ResponseEntity.ok(fileDTO);
-    }
+//    /**
+//     * 파일조회 - 썸네일
+//     *
+//     * @param fileId
+//     * @return
+//     */
+//    @GetMapping("/{id}/thumbnail")
+//    public ResponseEntity<?> getThumbnailFile(@PathVariable("id") String fileId) {
+//        FileDTO fileDTO = fileService.getFile(fileId);
+//
+//        if (fileDTO == null) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(Map.of("error", "파일이 존재하지 않습니다."));
+//        }
+//
+//        if (fileDTO.getThumbNailUrl() == null && !ALLOWED_EXTENSIONS_IMAGE.contains(fileDTO.getFileType())) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(Map.of("error", "thumbnail이 존재하지 않는 파일입니다."));
+//        }
+//        log.info("fileDTO.getThumbNailUrl={}", fileDTO.getThumbNailUrl());
+//        log.info("fileDTO.getFileType={}", fileDTO.getFileType());
+//
+//        // 파일이 Profile일 경우
+//        if (fileDTO instanceof ProfileFileDTO) {
+//            return ResponseEntity.ok(fileDTO);  // ProfileFileDTO 반환
+//        }
+//
+//        // 파일이 Chat일 경우
+//        if (fileDTO instanceof ChatFileDTO) {
+//            // ChatFileDTO에서 roomId가 있는지 확인
+//            if (((ChatFileDTO) fileDTO).getRoomId() == null) {
+//                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                        .body(Map.of("error", "Chat 파일에 필요한 roomId가 없습니다."));
+//            }
+//            return ResponseEntity.ok(fileDTO);  // ChatFileDTO 반환
+//        }
+//
+//        return ResponseEntity.ok(fileDTO);
+//    }
 
     /**
      * 파일 다운로드
      *
-     * @param id
+     * @param fileId
      * @return
      * @throws IOException
      */
     @GetMapping("/{id}/download")
-    public ResponseEntity<?> downloadFile(@PathVariable("id") Long id) throws IOException {
-        byte[] bytes = fileService.downloadFile(id);
-        FileDTO file = fileService.getFile(id);
+    public ResponseEntity<?> downloadFile(@PathVariable("id") String fileId) throws IOException {
+        byte[] bytes = fileService.downloadFile(fileId);
+        FileDTO file = fileService.getFile(fileId);
 
         //헤더 작성
         HttpHeaders httpHeaders = new HttpHeaders();
