@@ -1,16 +1,19 @@
 package com.one.social_project.domain.file.controller;
 
+import com.one.social_project.domain.chat.service.ChatRoomService;
 import com.one.social_project.domain.file.dto.ChatFileDTO;
 import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
 import com.one.social_project.domain.file.entity.FileCategory;
 import com.one.social_project.domain.file.service.FileService;
+import com.one.social_project.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +33,7 @@ import static com.one.social_project.domain.file.FileUtil.ALLOWED_EXTENSIONS_IMA
 public class FileController {
 
     private final FileService fileService;
+    private final ChatRoomService chatRoomService;
 
     /**
      * 파일 업로드
@@ -42,17 +46,16 @@ public class FileController {
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFiles(@RequestPart("file") List<MultipartFile> files,
                                          @RequestParam("category") String category,
-//                                         @AuthenticationPrincipal CustomUserDetails customUserDetails,
-                                         @RequestParam("nickname") String nickname,
+                                         @AuthenticationPrincipal User user,
                                          @RequestParam(value = "roomId", required = false) String roomId) throws IOException {
 
-//        String nickname = customUserDetails.getUser().getNickname();  //유저정보 꺼내오기
+        String nickname = user.getNickname();  //유저정보 꺼내오기
 
         List<FileDTO> uploadedFiles = new ArrayList<>();
 
-        // 'chat' 카테고리일 때만 messageId 필수 체크
+        // 'chat' 카테고리일 때만 roomId 필수 체크
         if ("chat".equalsIgnoreCase(category) && roomId == null) {
-            return ResponseEntity.badRequest().body("messageId는 chat 카테고리에서 필수입니다.");
+            return ResponseEntity.badRequest().body("roomId는 chat 카테고리에서 필수입니다.");
         }
 
         // category를 FileCategory enum으로 변환
