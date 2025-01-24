@@ -17,6 +17,9 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	all {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
 }
 
 repositories {
@@ -92,7 +95,13 @@ dependencies {
 	implementation group: 'com.querydsl', name: 'querydsl-apt', version: '5.1.0'
 	annotationProcessor 'com.querydsl:querydsl-apt'
 
+// Swagger(API 문서화)
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+
 }
+
+
+
 
 tasks.named('test') {
 	useJUnitPlatform()
