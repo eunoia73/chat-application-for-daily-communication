@@ -1,6 +1,5 @@
 package com.one.social_project.domain.file.controller;
 
-import com.one.social_project.domain.chat.service.ChatRoomService;
 import com.one.social_project.domain.file.dto.ChatFileDTO;
 import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
@@ -22,8 +21,6 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static com.one.social_project.domain.file.FileUtil.ALLOWED_EXTENSIONS_IMAGE;
 
 
 @Slf4j
