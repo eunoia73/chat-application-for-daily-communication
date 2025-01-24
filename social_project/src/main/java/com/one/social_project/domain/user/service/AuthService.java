@@ -46,6 +46,10 @@ public class AuthService implements UserDetailsService {
         if (userRepository.existsByEmail(registerReqDto.getEmail())) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
+        // 닉네임 중복 체크
+        if(userRepository.existsByEmail(registerReqDto.getNickname())) {
+            throw new IllegalArgumentException("이미 등록된 닉네임입니다.");
+        }
         if(registerReqDto.getOauth2UserInfo() != null)
         {
             if(registerReqDto.getOauth2UserInfo().getProvider().equals("google")) {
