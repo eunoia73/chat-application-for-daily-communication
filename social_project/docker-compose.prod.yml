@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  app:
+    image: ${CI_REGISTRY_USER}/${CI_REGISTRY_IMAGE}:latest
+    container_name: social-project-app
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/social
+      SPRING_DATASOURCE_USERNAME: ${ENV_USER_NAME}
+      SPRING_DATASOURCE_PASSWORD: ${ENV_ROOT_PASSWORD}
+      SPRING_DATA_MONGODB_URI: mongodb://${ENV_USER_NAME}:${ENV_USER_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: ${ENV_USER_PASSWORD}
+    depends_on:
+      - mysql
+      - mongodb
+      - redis
+    networks:
+      - prod-network
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ENV_ROOT_PASSWORD}
+      MYSQL_DATABASE: social
+      MYSQL_USER: ${ENV_USER_NAME}
+      MYSQL_PASSWORD: ${ENV_USER_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - prod-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${ENV_USER_NAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${ENV_USER_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - prod-network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    command: redis-server --requirepass ${ENV_USER_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - prod-network
+
+volumes:
+  mysql_data:
+  mongodb_data:
+  redis_data:
+
+networks:
+  prod-network:
+    driver: bridge 
