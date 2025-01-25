@@ -1,7 +1,5 @@
-FROM openjdk:17
-ARG JAR_FILE=/build/libs/*.jar
-COPY ${JAR_RILE} app.jar
-ENTRYPOINT ["java", "-jar", "/app.jar"]
-
-# 컨테이너 외부에 노출할 포트
+FROM openjdk:17-slim
+WORKDIR /app
+COPY build/libs/social_project-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

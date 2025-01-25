@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # MySQL 서비스
+  mysql:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: elice1234
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: elice
+      MYSQL_PASSWORD: elice1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    networks:
+      - dev-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: elice
+      MONGO_INITDB_ROOT_PASSWORD: elice1234
+      MONGO_INITDB_DATABASE: chatdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongodb_data:/data/db
+    networks:
+      - dev-network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    command: redis-server --requirepass elice1234
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge 
