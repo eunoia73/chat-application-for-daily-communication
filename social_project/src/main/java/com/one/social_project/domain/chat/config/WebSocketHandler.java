@@ -98,42 +98,41 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String roomId = chatMessageDTO.getRoomId();
         String sender = chatMessageDTO.getSender();
 
-        // 읽지 않은 메시지 처리
-        handleReadAllUnreadMessages(roomId, sender);
+        if(roomId == null || sender == null){
+            sendErrorResponse(session, Map.of("result", false));
+            return;
+        }
+        try {
+            // 읽지 않은 메시지 처리
+            handleReadAllUnreadMessages(session, roomId, sender);
 
-        // 입장 메시지 브로드캐스트
-        Map<String, Object> joinMessage = Map.of(
-                "messageType", "ENTER",
-                "message", sender + "님이 입장하였습니다."
-        );
-        broadcast(roomId, createTextMessage(joinMessage)); // 중복 호출 확인
-        log.info("ENTER 메시지 처리 완료: roomId={}, sender={}", roomId, sender);
+            // 생성 응답 전송
+            sendResponse(session, Map.of("result", true));
+            log.info("ENTER 메시지 처리 완료: roomId={}, sender={}", roomId, sender);
+        }catch (Exception e){
+            sendErrorResponse(session, Map.of("result", false));
+        }
     }
 
     /**
      * 읽지 않은 메시지를 모두 읽음 처리
      */
-    private void handleReadAllUnreadMessages(String roomId, String sender) {
+    private void handleReadAllUnreadMessages(WebSocketSession session, String roomId, String sender) {
         List<ChatMessage> unreadMessages = chatMessageService.getUnreadMessages(roomId, sender);
 
-        if (!unreadMessages.isEmpty()) {
-            unreadMessages.forEach(chatMessage -> {
-                chatMessageService.markMessageAsRead(chatMessage.getId(), sender);
-                readReceiptService.markAsRead(chatMessage.getId(), sender);
-            });
+        if(unreadMessages == null || unreadMessages.isEmpty()){
+            log.info("읽은 메시지가 없습니다 : roomId={}, sender={}",roomId,sender);
+            return;
+        }
 
-            int unreadCount = readReceiptService.countUnreadMessages(roomId, sender);
+        try {
+            markMessagesAsRead(unreadMessages, sender);
 
-            Map<String, Object> response = Map.of(
-                    "messageType", "UNREAD_COUNT",
-                    "roomId", roomId,
-                    "unreadCount", unreadCount
-            );
-
-            broadcast(roomId, createTextMessage(response));
+           sendResponse(session, Map.of("result", true));
             log.info("읽지 않은 메시지 처리 완료: roomId={}, sender={}, 처리된 메시지 수={}",
-                    roomId, sender, unreadMessages.size());
-        } else {
+                        roomId, sender, unreadMessages.size());
+        }catch (Exception e){
+            sendErrorResponse(session, Map.of("result", false));
             log.info("읽지 않은 메시지가 없습니다: roomId={}, sender={}", roomId, sender);
         }
     }
@@ -147,31 +146,21 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         if (roomId == null || roomId.isBlank() ||
             chatMessageDTO.getMessage() == null|| chatMessageDTO.getMessage().isBlank()) {
-            sendErrorResponse(session);
+            sendErrorResponse(session, Map.of("result", false));
             return;
         }
 
         try {
             LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
-
             chatMessageDTO.setSender(nickname); // 닉네임으로 업데이트
             chatMessageDTO.setCreatedAt(createdAt);
 
             String messageId = chatMessageService.saveMessage(roomId, nickname, chatMessageDTO.getMessage());
             readReceiptService.markAsRead(messageId, nickname);
 
-            List<String> readers = readReceiptService.getReadBy(messageId);
-
-            Map<String, Object> readReceiptResponse = Map.of(
-                    "roomId", roomId,
-                    "messageId", messageId,
-                    "readBy", readers
-            );
-
-            broadcast(roomId, createTextMessage(readReceiptResponse));
-            broadcast(roomId, createTextMessage(Map.of("result", true)));
+            broadcast(roomId, createTextMessage(Map.of("Read and Chat: result", true)));
         }catch (Exception e){
-           sendErrorResponse(session);
+            sendErrorResponse(session, Map.of("result", false));
         }
     }
 
@@ -179,22 +168,22 @@ public class WebSocketHandler extends TextWebSocketHandler {
      * 사용자의 채팅방 읽지 않은 메시지 수 요청 처리
      */
     private void handleUnreadCountRequest(ChatMessageDTO chatMessageDTO, WebSocketSession session) {
-            String roomId = chatMessageDTO.getRoomId();
-            String nickname = extractNickname(session);
+        String roomId = chatMessageDTO.getRoomId();
+        String nickname = extractNickname(session);
+
+        if(roomId == null || roomId.isBlank() ||
+        nickname == null || nickname.isBlank()){
+            sendErrorResponse(session, Map.of("result", false));
+            return;
+        }
 
         try {
-            int unreadCount = readReceiptService.countUnreadMessages(roomId, nickname);
+           readReceiptService.countUnreadMessages(roomId, nickname);
 
-            Map<String, Object> response = Map.of(
-                    "messageType", "UNREAD_COUNT",
-                    "roomId", roomId,
-                    "nickname", nickname,
-                    "unreadCount", unreadCount
-            );
-
-            session.sendMessage(createTextMessage(response));
+           session.sendMessage(createTextMessage(Map.of("Unread : result", true)));
         } catch (IOException e) {
             log.error("Unread count 전송 실패: {}", e.getMessage(), e);
+            sendErrorResponse(session, Map.of("result", false));
         }
     }
 
@@ -302,14 +291,27 @@ public class WebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void sendErrorResponse(WebSocketSession session){
+    private void sendResponse(WebSocketSession session, Map<String, Object> response){
         try{
-            session.sendMessage(createTextMessage(Map.of(
-                    "result", false
-            )));
+            session.sendMessage(createTextMessage(response));
+        }catch (IOException e){
+            log.error("응답 전송 실패 : {}", e.getMessage(), e);
+        }
+    }
+
+    private void sendErrorResponse(WebSocketSession session, Map<String, Object> response){
+        try{
+            session.sendMessage(createTextMessage(response));
         }catch (IOException e){
             log.error("response 전송 에러", e);
         }
+    }
+
+    private void markMessagesAsRead(List<ChatMessage> messages, String sender){
+        messages.forEach(chatMessage -> {
+            chatMessageService.markMessageAsRead(chatMessage.getId(), sender);
+            readReceiptService.markAsRead(chatMessage.getId(), sender);
+        });
     }
 
     /**
