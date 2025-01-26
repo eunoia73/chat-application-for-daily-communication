@@ -3,7 +3,6 @@ package com.one.social_project.domain.chat.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.one.social_project.domain.chat.dto.ChatMessageDTO;
 import com.one.social_project.domain.chat.entity.ChatMessage;
-import com.one.social_project.domain.chat.repository.ChatRoomRepository;
 import com.one.social_project.domain.chat.service.ChatMessageService;
 import com.one.social_project.domain.chat.service.ReadReceiptService;
 import com.one.social_project.domain.user.util.TokenProvider;
@@ -142,28 +141,38 @@ public class WebSocketHandler extends TextWebSocketHandler {
     /**
      * 채팅 메시지 처리
      */
-    private void handleChatMessage(WebSocketSession session, ChatMessageDTO chatMessageDTO) {
+    private void handleChatMessage(WebSocketSession session, ChatMessageDTO chatMessageDTO){
         String roomId = chatMessageDTO.getRoomId();
         String nickname = extractNickname(session);
 
-        LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+        if (roomId == null || roomId.isBlank() ||
+            chatMessageDTO.getMessage() == null|| chatMessageDTO.getMessage().isBlank()) {
+            sendErrorResponse(session);
+            return;
+        }
 
-        chatMessageDTO.setSender(nickname); // 닉네임으로 업데이트
-        chatMessageDTO.setCreatedAt(createdAt);
+        try {
+            LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
 
-        String messageId = chatMessageService.saveMessage(roomId, nickname, chatMessageDTO.getMessage());
-        readReceiptService.markAsRead(messageId, nickname);
+            chatMessageDTO.setSender(nickname); // 닉네임으로 업데이트
+            chatMessageDTO.setCreatedAt(createdAt);
 
-        List<String> readers = readReceiptService.getReadBy(messageId);
+            String messageId = chatMessageService.saveMessage(roomId, nickname, chatMessageDTO.getMessage());
+            readReceiptService.markAsRead(messageId, nickname);
 
-        Map<String, Object> readReceiptResponse = Map.of(
-                "roomId", roomId,
-                "messageId", messageId,
-                "readBy", readers
-        );
+            List<String> readers = readReceiptService.getReadBy(messageId);
 
-        broadcast(roomId, createTextMessage(readReceiptResponse));
-        broadcast(roomId, createTextMessage(chatMessageDTO));
+            Map<String, Object> readReceiptResponse = Map.of(
+                    "roomId", roomId,
+                    "messageId", messageId,
+                    "readBy", readers
+            );
+
+            broadcast(roomId, createTextMessage(readReceiptResponse));
+            broadcast(roomId, createTextMessage(Map.of("result", true)));
+        }catch (Exception e){
+           sendErrorResponse(session);
+        }
     }
 
     /**
@@ -290,6 +299,16 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return new TextMessage(objectMapper.writeValueAsString(data));
         } catch (IOException e) {
             throw new RuntimeException("메시지 직렬화 실패", e);
+        }
+    }
+
+    private void sendErrorResponse(WebSocketSession session){
+        try{
+            session.sendMessage(createTextMessage(Map.of(
+                    "result", false
+            )));
+        }catch (IOException e){
+            log.error("response 전송 에러", e);
         }
     }
 
