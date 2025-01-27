@@ -11,8 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -87,5 +89,26 @@ public class NotificationService {
         return notificationDTO;
 
     }
+
+    //알림 삭제
+    @Transactional
+    public boolean deleteNotification(String userNickname, String notificationId) {
+        // 알림 조회
+
+        Optional<Notification> notification = notificationRepository.findByNotificationId(notificationId);
+
+        if (notification.isPresent() && notification.get().getReceiver().equals(userNickname)) {
+            // 알림이 존재, receiver와 user nickname같으면 삭제
+            int result = notificationRepository.deleteByNotificationId(notificationId);
+            if (result == 1) {
+                log.info("result={}", result);
+                return true;
+            } else return false;
+        }
+
+        // 알림이 존재하지 않는 경우
+        return false;
+    }
+
 
 }
