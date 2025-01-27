@@ -13,11 +13,17 @@ import com.one.social_project.domain.file.entity.File;
 import com.one.social_project.domain.file.entity.FileCategory;
 import com.one.social_project.domain.file.error.FileNotFoundException;
 import com.one.social_project.domain.file.repository.FileRepository;
+import com.one.social_project.domain.user.repository.UserRepository;
+import com.one.social_project.domain.user.service.UserService;
+import com.one.social_project.exception.errorCode.UserErrorCode;
+import com.one.social_project.exception.exception.UserException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import com.amazonaws.services.s3.AmazonS3;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -34,6 +40,8 @@ public class FileService {
 
     private final FileRepository fileRepository;
     private final ChatParticipantsRepository chatParticipantsRepository;
+    private final UserService userService;
+    private final UserRepository userRepository;
     private final FileUtil fileUtil;
     private final AmazonS3 s3Client;
 
@@ -85,7 +93,7 @@ public class FileService {
                 log.info("Nickname {} is present in participants", nickname);
             } else {
                 log.info("Nickname {} is NOT present in participants", nickname);
-                throw new IllegalArgumentException("파일 업로드 권한이 없습니다.");
+                return null;
             }
         }
 
@@ -124,6 +132,14 @@ public class FileService {
                 .build();
         File saved = fileRepository.save(file);
 
+
+        //PROFILE일 경우, user 테이블 profileImg update
+        if (fileDTO.getCategory() == FileCategory.PROFILE) {
+            Long userId = userRepository.findByNickname(fileDTO.getNickname())
+                    .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND))
+                    .getId();
+            userService.changeProfileImage(userId, thumbnailFileUrl);
+        }
 
         FileDTO savedDTO = null;
 
