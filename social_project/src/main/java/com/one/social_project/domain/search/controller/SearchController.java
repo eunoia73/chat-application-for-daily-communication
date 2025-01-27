@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,16 @@ public class SearchController {
 
         Map<String, Object> response = new HashMap<>();
         try {
+
+            // nickname이 비어있는지 확인
+            if (condition.getNickname() == null || condition.getNickname().trim().isEmpty()) {
+                // 빈 결과를 반환
+                response.put("content", Collections.emptyList());
+                response.put("pageable", new PageableResponse(0, pageable.getPageSize(), pageable.getOffset(), true));
+                response.put("result", true);
+                return ResponseEntity.ok(response);
+            }
+
             Page<UserSearchDTO> result = chatSearchService.searchUserByNickname(condition, pageable);
 
             // PageableResponse 객체 생성
