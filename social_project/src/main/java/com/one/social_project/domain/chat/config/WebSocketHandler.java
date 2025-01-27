@@ -99,7 +99,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         String sender = chatMessageDTO.getSender();
 
         // 읽지 않은 메시지 처리
-        handleReadAllUnreadMessages(session, roomId, sender);
+        handleReadAllUnreadMessages(roomId, sender);
 
         // 입장 메시지 브로드캐스트
         Map<String, Object> EnterMessage = Map.of(
