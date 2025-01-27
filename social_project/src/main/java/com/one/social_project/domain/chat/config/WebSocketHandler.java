@@ -106,8 +106,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
             // 읽지 않은 메시지 처리
             handleReadAllUnreadMessages(session, roomId, sender);
 
-            // 생성 응답 전송
-            sendResponse(session, Map.of("result", true));
+            // 입장 메시지 브로드캐스트
+            Map<String, Object> EnterMessage = Map.of(
+                    "messageType", "EMTER",
+                    "message", sender + "님이 입장하였습니다."
+            );
+            broadcast(roomId, createTextMessage(EnterMessage));
             log.info("ENTER 메시지 처리 완료: roomId={}, sender={}", roomId, sender);
         }catch (Exception e){
             sendErrorResponse(session, Map.of("result", false));
@@ -126,9 +130,17 @@ public class WebSocketHandler extends TextWebSocketHandler {
         }
 
         try {
-            markMessagesAsRead(unreadMessages, sender);
+           markMessagesAsRead(unreadMessages, sender);
 
-           sendResponse(session, Map.of("result", true));
+           int unreadCount = readReceiptService.countUnreadMessages(roomId, sender);
+
+           Map<String, Object> UnreadResponse = Map.of(
+                   "messageType", "UNREAD_COUNT",
+                   "roomId", roomId,
+                   "unreadCount", unreadCount
+           );
+
+           broadcast(roomId, createTextMessage(UnreadResponse));
             log.info("읽지 않은 메시지 처리 완료: roomId={}, sender={}, 처리된 메시지 수={}",
                         roomId, sender, unreadMessages.size());
         }catch (Exception e){
@@ -158,7 +170,16 @@ public class WebSocketHandler extends TextWebSocketHandler {
             String messageId = chatMessageService.saveMessage(roomId, nickname, chatMessageDTO.getMessage());
             readReceiptService.markAsRead(messageId, nickname);
 
-            broadcast(roomId, createTextMessage(Map.of("Read and Chat: result", true)));
+            List<String> readers = readReceiptService.getReadBy(messageId);
+
+            Map<String, Object> readReceiptResponse = Map.of(
+                    "roomId", roomId,
+                    "messageId", messageId,
+                    "readBy", readers
+            );
+
+            broadcast(roomId, createTextMessage(readReceiptResponse));
+            broadcast(roomId, createTextMessage(chatMessageDTO));
         }catch (Exception e){
             sendErrorResponse(session, Map.of("result", false));
         }
@@ -178,9 +199,16 @@ public class WebSocketHandler extends TextWebSocketHandler {
         }
 
         try {
-           readReceiptService.countUnreadMessages(roomId, nickname);
+           int unreadCount = readReceiptService.countUnreadMessages(roomId, nickname);
 
-           session.sendMessage(createTextMessage(Map.of("Unread : result", true)));
+           Map<String, Object> UnreadResponse = Map.of(
+                   "messageType", "UNREAD_COUNT",
+                   "roomId", roomId,
+                   "nickname", nickname,
+                   "unreadCount", unreadCount
+           );
+
+            session.sendMessage(createTextMessage(UnreadResponse));
         } catch (IOException e) {
             log.error("Unread count 전송 실패: {}", e.getMessage(), e);
             sendErrorResponse(session, Map.of("result", false));
@@ -291,13 +319,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void sendResponse(WebSocketSession session, Map<String, Object> response){
-        try{
-            session.sendMessage(createTextMessage(response));
-        }catch (IOException e){
-            log.error("응답 전송 실패 : {}", e.getMessage(), e);
-        }
-    }
+
 
     private void sendErrorResponse(WebSocketSession session, Map<String, Object> response){
         try{
