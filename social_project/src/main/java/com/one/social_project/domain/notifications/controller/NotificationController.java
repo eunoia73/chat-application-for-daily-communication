@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,10 +58,33 @@ public class NotificationController {
 
         // 알림이 없는 경우
         if (detailNotification == null) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("알림이 없습니다.");
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of(
+                    "result", false
+            ));
+
+
         }
 
         return ResponseEntity.ok(detailNotification);
     }
+
+
+    //알림 삭제
+    @DeleteMapping("/api/users/notifications/{id}")
+    public ResponseEntity<?> deleteNotification(@AuthenticationPrincipal User user,
+                                                   @PathVariable("id") String notificationId) {
+
+        String nickname = user.getNickname();
+        boolean result = notificationService.deleteNotification(nickname, notificationId);
+        if (result) {
+            return ResponseEntity.ok().body(Map.of(
+                    "result", true
+            ));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "result", false
+        ));
+    }
+
 
 }
