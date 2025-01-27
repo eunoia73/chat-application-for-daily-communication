@@ -170,15 +170,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
             String messageId = chatMessageService.saveMessage(roomId, nickname, chatMessageDTO.getMessage());
             readReceiptService.markAsRead(messageId, nickname);
 
-            List<String> readers = readReceiptService.getReadBy(messageId);
-
-            Map<String, Object> readReceiptResponse = Map.of(
-                    "roomId", roomId,
-                    "messageId", messageId,
-                    "readBy", readers
-            );
-
-            broadcast(roomId, createTextMessage(readReceiptResponse));
             broadcast(roomId, createTextMessage(chatMessageDTO));
         }catch (Exception e){
             sendErrorResponse(session, Map.of("result", false));
