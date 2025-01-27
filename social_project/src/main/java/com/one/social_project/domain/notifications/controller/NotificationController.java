@@ -57,7 +57,11 @@ public class NotificationController {
 
         // 알림이 없는 경우
         if (detailNotification == null) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("알림이 없습니다.");
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of(
+                    "result", false
+            ));
+
+
         }
 
         return ResponseEntity.ok(detailNotification);
