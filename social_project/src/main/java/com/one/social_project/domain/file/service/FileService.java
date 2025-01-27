@@ -22,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import com.amazonaws.services.s3.AmazonS3;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -91,7 +93,7 @@ public class FileService {
                 log.info("Nickname {} is present in participants", nickname);
             } else {
                 log.info("Nickname {} is NOT present in participants", nickname);
-                throw new IllegalArgumentException("파일 업로드 권한이 없습니다.");
+                return null;
             }
         }
 

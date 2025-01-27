@@ -135,6 +135,14 @@ public class FileController {
             // 파일을 서비스로 업로드
             FileDTO savedDTO = fileService.uploadFile(fileDTO);
 
+            // 파일 업로드 권한이 없을 때 처리
+            if (savedDTO == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "result", false
+//                        "error", "파일 업로드 권한이 없습니다."
+                ));
+            }
+
             // 업로드된 파일 정보 추가
             uploadedFiles.add(savedDTO);
         }
