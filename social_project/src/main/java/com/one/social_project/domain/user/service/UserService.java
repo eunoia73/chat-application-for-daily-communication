@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 public class UserService{
 
     private final UserRepository userRepository;
-
+    private final String s3Url = "https://sookyung-s3-bucket.s3.ap-northeast-2.amazonaws.com/";
 
     public UserDto getUserInfo(User user) {
         return user.toDto();
@@ -41,7 +41,7 @@ public class UserService{
     public String changeProfileImage(Long user ,String profileImage) {
         User findUser = userRepository.findById(user)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-        findUser.setProfileImg(profileImage);
+        findUser.setProfileImg(s3Url + profileImage);
         userRepository.save(findUser);
         return profileImage;
     }
