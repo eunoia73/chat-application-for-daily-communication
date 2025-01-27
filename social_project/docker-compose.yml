@@ -11,21 +11,17 @@ services:
       MYSQL_PASSWORD: elice1234
     ports:
       - "3306:3306"  # 외부에서 3307 포트로 접속
-    volumes:
-      - ./mysql_data:/var/lib/mysql  # MySQL 데이터 지속성
+
 
   mongodb:
     image: mongo:latest
     container_name: mongodb
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: elice
-      MONGO_INITDB_ROOT_PASSWORD: elice1234
-      MONGO_INITDB_DATABASE: chatdb
+      MONGO_INITDB_DATABASE: chat
     ports:
       - "27017:27017"
-    volumes:
-      - ./mongodb_data:/data/db
+
 
   # Redis 서비스
   redis:
@@ -33,6 +29,4 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
-    volumes:
-      - ./redis_data:/data
     command: redis-server --requirepass elice1234  # Redis 비밀번호 설정
