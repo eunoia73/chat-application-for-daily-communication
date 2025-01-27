@@ -1,5 +1,6 @@
 package com.one.social_project.domain.email.service;
 
+import com.one.social_project.domain.email.dto.util.ResultDto;
 import com.one.social_project.domain.email.util.EmailRedisUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -86,12 +87,15 @@ public class EmailService {
     }
 
     // 코드 검증
-    public Boolean verifyEmailCode(String email, String code) {
+    public ResultDto verifyEmailCode(String email, String code) {
         String codeFoundByEmail = redisUtil.getData(email);
         log.info("code found by email: " + codeFoundByEmail);
+        ResultDto resultDto = new ResultDto();
+        resultDto.setResult(false);
         if (codeFoundByEmail == null) {
-            return false;
+            return resultDto;
         }
-        return codeFoundByEmail.equals(code);
+        resultDto.setResult(codeFoundByEmail.equals(code));
+        return resultDto;
     }
 }

@@ -21,7 +21,7 @@ public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private String notificationId;
     private String receiver; // 알림 수신자
     private String sender;  //알림 발신자
     private String message;

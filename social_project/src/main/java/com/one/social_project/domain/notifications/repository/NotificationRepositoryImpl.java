@@ -26,6 +26,7 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom{
         QueryResults<NotificationListDTO> results = queryFactory
                 .select(new QNotificationListDTO(
                         notification.id,
+                        notification.notificationId,
                         notification.receiver,
                         notification.sender,
                         notification.message,

@@ -27,6 +27,8 @@ public class QNotification extends EntityPathBase<Notification> {
 
     public final StringPath message = createString("message");
 
+    public final StringPath notificationId = createString("notificationId");
+
     public final StringPath receiver = createString("receiver");
 
     public final StringPath roomId = createString("roomId");

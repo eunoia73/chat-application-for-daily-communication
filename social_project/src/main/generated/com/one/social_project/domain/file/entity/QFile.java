@@ -25,6 +25,8 @@ public class QFile extends EntityPathBase<File> {
 
     public final DateTimePath<java.time.LocalDateTime> expiredAt = createDateTime("expiredAt", java.time.LocalDateTime.class);
 
+    public final StringPath fileId = createString("fileId");
+
     public final StringPath fileName = createString("fileName");
 
     public final NumberPath<Long> fileSize = createNumber("fileSize", Long.class);

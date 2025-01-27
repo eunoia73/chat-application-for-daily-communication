@@ -11,8 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -28,9 +31,11 @@ public class NotificationService {
         participants.removeIf(participant -> participant.equals(response.getOwnerId()));
 
         for (String userId : participants) {
+            String notificationId = UUID.randomUUID().toString();
             String message = String.format(
                     "새로운 채팅방에 초대되었습니다 : '%s'", response.getRoomName());
             Notification notification = Notification.builder()
+                    .notificationId(notificationId)
                     .receiver(userId)
                     .sender(response.getOwnerId())
                     .message(message)
@@ -50,10 +55,10 @@ public class NotificationService {
     }
 
     //상세 알림 조회
-    public NotificationDetailDTO getDetailNotification(String userNickname, Long id) {
+    public NotificationDetailDTO getDetailNotification(String userNickname, String notificationId) {
 
         // 알림을 데이터베이스에서 조회
-        Notification notification = notificationRepository.findById(id)
+        Notification notification = notificationRepository.findByNotificationId(notificationId)
                 .orElseThrow(() -> new NotificationNotFoundException("알림을 찾을 수 없습니다."));
 
         // 알림이 해당 사용자에게 속하는지 확인
@@ -70,6 +75,7 @@ public class NotificationService {
         // Entity -> DTO 변환
         NotificationDetailDTO notificationDTO = NotificationDetailDTO.builder()
                 .id(notification.getId())
+                .notificationId(notification.getNotificationId())
                 .receiver(notification.getReceiver())
                 .sender(notification.getSender())
                 .message(notification.getMessage())
@@ -83,5 +89,26 @@ public class NotificationService {
         return notificationDTO;
 
     }
+
+    //알림 삭제
+    @Transactional
+    public boolean deleteNotification(String userNickname, String notificationId) {
+        // 알림 조회
+
+        Optional<Notification> notification = notificationRepository.findByNotificationId(notificationId);
+
+        if (notification.isPresent() && notification.get().getReceiver().equals(userNickname)) {
+            // 알림이 존재, receiver와 user nickname같으면 삭제
+            int result = notificationRepository.deleteByNotificationId(notificationId);
+            if (result == 1) {
+                log.info("result={}", result);
+                return true;
+            } else return false;
+        }
+
+        // 알림이 존재하지 않는 경우
+        return false;
+    }
+
 
 }

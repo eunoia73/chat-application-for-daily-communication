@@ -2,6 +2,7 @@ package com.one.social_project.domain.user.controller;
 
 import com.one.social_project.domain.user.dto.response.UserDtoResponse;
 import com.one.social_project.domain.user.dto.user.UserDto;
+import com.one.social_project.domain.user.dto.util.CheckDto;
 import com.one.social_project.domain.user.entity.User;
 import com.one.social_project.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,12 @@ public class UserController {
     }
 
     @GetMapping("/check/email/{email}")
-    public ResponseEntity<Boolean> checkEmail(@PathVariable("email") String email) {
+    public ResponseEntity<CheckDto> checkEmail(@PathVariable("email") String email) {
         return ResponseEntity.ok(userService.isValidEmail(email));
+    }
+
+    @GetMapping("/check/nickname/{nickname}")
+    public ResponseEntity<CheckDto> checkNickname(@PathVariable("nickname") String nickname) {
+        return ResponseEntity.ok(userService.isValidNickname(nickname));
     }
 }

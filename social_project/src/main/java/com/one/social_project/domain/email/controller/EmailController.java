@@ -1,6 +1,7 @@
 package com.one.social_project.domain.email.controller;
 
 import com.one.social_project.domain.email.dto.EmailDto;
+import com.one.social_project.domain.email.dto.util.ResultDto;
 import com.one.social_project.domain.email.service.EmailService;
 import com.one.social_project.domain.user.util.CustomUserDetails;
 import jakarta.mail.MessagingException;
@@ -26,7 +27,7 @@ public class EmailController {
 
     // 인증코드 인증
     @PostMapping("/verify")
-    public Boolean verify(@RequestBody EmailDto emailDto) {
+    public ResultDto verify(@RequestBody EmailDto emailDto) {
         log.info("EmailController.verify()");
         return emailService.verifyEmailCode(emailDto.getEmail(), emailDto.getVerifyCode());
     }

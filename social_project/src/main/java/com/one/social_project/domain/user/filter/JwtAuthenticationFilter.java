@@ -25,8 +25,8 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final String BEARER_PREFIX = "Bearer ";
-    private static final int BEARER_PREFIX_LENGTH = 7;
+    private static final String BEARER_PREFIX = "Bearer";
+    private static final int BEARER_PREFIX_LENGTH = 6;
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final TokenProvider tokenProvider;
