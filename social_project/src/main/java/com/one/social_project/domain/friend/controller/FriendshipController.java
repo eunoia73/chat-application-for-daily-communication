@@ -1,5 +1,6 @@
 package com.one.social_project.domain.friend.controller;
 
+import com.one.social_project.domain.friend.dto.FriendshipResDto;
 import com.one.social_project.domain.friend.service.FriendshipService;
 import com.one.social_project.domain.user.entity.User;
 import jakarta.validation.Valid;
@@ -17,10 +18,13 @@ public class FriendshipController {
     private final FriendshipService friendshipService;
 
     @PostMapping("/{email}")
-    public ResponseEntity<String> createFriendship(@AuthenticationPrincipal User user, @PathVariable("email") String email) throws Exception {
+    public ResponseEntity<FriendshipResDto> createFriendship(@AuthenticationPrincipal User user, @PathVariable("email") String email) throws Exception {
         friendshipService.createFriendship(user.getEmail(), email);
 
-        return ResponseEntity.ok("친구요청을 보냈습니다!");
+        FriendshipResDto friendshipResDto = new FriendshipResDto();
+        friendshipResDto.setMessage("친구요청을 보냈습니다!");
+
+        return ResponseEntity.ok(friendshipResDto);
     }
 
     @GetMapping("/waits")
