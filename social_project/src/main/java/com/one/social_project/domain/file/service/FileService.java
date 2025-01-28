@@ -133,13 +133,13 @@ public class FileService {
         File saved = fileRepository.save(file);
 
 
-//        //PROFILE일 경우, user 테이블 profileImg update
-//        if (fileDTO.getCategory() == FileCategory.PROFILE) {
-//            Long userId = userRepository.findByNickname(fileDTO.getNickname())
-//                    .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND))
-//                    .getId();
-//            userService.changeProfileImage(userId, thumbnailFileUrl);
-//        }
+        //PROFILE일 경우, user 테이블 profileImg update
+        if (fileDTO.getCategory() == FileCategory.PROFILE) {
+            Long userId = userRepository.findByNickname(fileDTO.getNickname())
+                    .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND))
+                    .getId();
+            userService.changeProfileImage(userId, thumbnailFileUrl);
+        }
 
         FileDTO savedDTO = null;
 
