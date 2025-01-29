@@ -300,9 +300,16 @@ public class WebSocketHandler extends TextWebSocketHandler {
     /**
      * 오류 메시지 전송
      */
-    private void sendError(WebSocketSession session, String errorMessage) {
+    private void sendError(WebSocketSession session, String redirectUrl) {
         try {
-            session.sendMessage(new TextMessage(errorMessage));
+            ObjectMapper objectMapper = new ObjectMapper();
+            String errorResponse = objectMapper.writeValueAsString(Map.of(
+                    "status", 200,
+                    "message", "오류 발생, 리다이렉트 중!",
+                    "redirectUrl", redirectUrl
+            ));
+
+            session.sendMessage(new TextMessage(errorResponse));
         } catch (IOException e) {
             log.error("오류 메시지 전송 실패: {}", e.getMessage(), e);
         }
