@@ -5,6 +5,7 @@ import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
 import com.one.social_project.domain.file.entity.FileCategory;
 import com.one.social_project.domain.file.error.FileNotFoundException;
+import com.one.social_project.domain.file.error.UnsupportedFileFormatException;
 import com.one.social_project.domain.file.service.FileService;
 import com.one.social_project.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,14 @@ public class FileController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
                         "result", false
-//                        "error", e.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(UnsupportedFileFormatException.class)
+    public ResponseEntity<Map<String, Object>> handleUnsupportedFileFormatException(UnsupportedFileFormatException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "result", false
                 ));
     }
 

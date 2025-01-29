@@ -2,6 +2,7 @@ package com.one.social_project.domain.file;
 
 import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.entity.FileCategory;
+import com.one.social_project.domain.file.error.UnsupportedFileFormatException;
 import org.apache.tika.Tika;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 
 @Component
@@ -24,10 +26,11 @@ public class FileUtil {
         // 파일 확장자 검증
         if (fileDTO.getCategory() == FileCategory.PROFILE) {
             if (!ALLOWED_EXTENSIONS_IMAGE.contains(fileExtension)) {
-                throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
+                throw new UnsupportedFileFormatException("지원하지 않는 파일 형식입니다.");
             }
         } else if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
-            throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
+//            throw new IllegalArgumentException("지원하지 않는 파일 형식입니다.");
+            throw new UnsupportedFileFormatException("지원하지 않는 파일 형식입니다.");
         }
 
         // MIME 타입 검증
@@ -53,7 +56,9 @@ public class FileUtil {
 
         // 파일 타입 검증
         if (!fileDTO.getFileType().equalsIgnoreCase(mimeType)) {
-            throw new IllegalArgumentException("파일 확장자와 MIME 타입이 일치하지 않습니다.");
+//            throw new IllegalArgumentException("파일 확장자와 MIME 타입이 일치하지 않습니다.");
+            throw new UnsupportedFileFormatException("지원하지 않는 파일 형식입니다.");
+
         }
 
         // S3 업로드용 InputStream 복제
