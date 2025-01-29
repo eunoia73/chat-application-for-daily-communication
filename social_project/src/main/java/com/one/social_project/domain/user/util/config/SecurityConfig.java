@@ -83,7 +83,10 @@ public class SecurityConfig {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration config = new CorsConfiguration();
-                        config.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
+                        config.setAllowedOrigins(List.of(
+                                "http://localhost:5173",
+                                "https://kdt-pt-1-pj-1-team01.elicecoding.com"
+                        ));
                         config.setAllowCredentials(true); // 쿠키 사용 허용
                         config.setAllowedMethods(Collections.singletonList("*"));
                         config.setAllowCredentials(true);
