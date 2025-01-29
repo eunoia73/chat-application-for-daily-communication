@@ -101,7 +101,8 @@ public class FileService {
         fileUtil.validateFile(fileDTO);
 
         //1. 파일 이름 변경, url 생성
-        String fileName = generateFileName(fileId, fileDTO);
+        String fileExtension = getFileExtension(fileDTO.getFileName());
+        String fileName = fileId + "." + fileExtension;  //UUID + 확장자
         String originFileUrl = defaultUrl + fileName;
 
         //2. 파일 업로드
@@ -110,7 +111,6 @@ public class FileService {
 
         //aws s3에 resized 파일이 잘 저장되었는지 확인(이미지 관련 파일만 저장됨)
         String thumbnailFileUrl = null;
-        String fileExtension = getFileExtension(fileDTO.getFileName());
         if (ALLOWED_EXTENSIONS_IMAGE.contains(fileExtension)) {
             thumbnailFileUrl = s3Client.getUrl(bucketNameResized, "resized-" + fileName).toString();
         }
@@ -194,9 +194,9 @@ public class FileService {
     }
 
     //파일 이름 생성
-    private String generateFileName(String fileId, FileDTO fileDTO) {
-        return fileId + "_" + fileDTO.getFileName();
-    }
+//    private String generateFileName(String fileId, FileDTO fileDTO) {
+//        return fileId + "_" + fileDTO.getFileName();
+//    }
 
     // 파일 확장자 추출
     private String getFileExtension(String fileName) {
