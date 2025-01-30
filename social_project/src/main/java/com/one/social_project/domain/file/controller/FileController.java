@@ -5,6 +5,7 @@ import com.one.social_project.domain.file.dto.FileDTO;
 import com.one.social_project.domain.file.dto.ProfileFileDTO;
 import com.one.social_project.domain.file.entity.FileCategory;
 import com.one.social_project.domain.file.error.FileNotFoundException;
+import com.one.social_project.domain.file.error.UnsupportedFileFormatException;
 import com.one.social_project.domain.file.service.FileService;
 import com.one.social_project.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,14 @@ public class FileController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
                         "result", false
-//                        "error", e.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(UnsupportedFileFormatException.class)
+    public ResponseEntity<Map<String, Object>> handleUnsupportedFileFormatException(UnsupportedFileFormatException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "result", false
                 ));
     }
 
@@ -59,6 +67,7 @@ public class FileController {
                                          @AuthenticationPrincipal User user,
                                          @RequestParam(value = "roomId", required = false) String roomId) throws IOException {
 
+        log.info("upload1={}", files);
         String nickname = user.getNickname();  //유저정보 꺼내오기
         long totalRequestSize = 0;
 
@@ -69,13 +78,20 @@ public class FileController {
             return ResponseEntity.badRequest().body("roomId는 chat 카테고리에서 필수입니다.");
         }
 
+        log.info("upload2={}", category);
+
         // category를 FileCategory enum으로 변환
         FileCategory fileCategory;
         try {
             fileCategory = FileCategory.valueOf(category.toUpperCase());  // "profile" -> FileCategory.PROFILE
+            log.info("category={}", fileCategory);
+
         } catch (IllegalArgumentException e) {
+            log.info("error={}", e.getMessage());
             return ResponseEntity.badRequest().body("Invalid category.");
         }
+
+        log.info("upload={}", category);
 
         for (MultipartFile file : files) {
             // 파일이 비어있는지 검증
