@@ -36,7 +36,8 @@ public class FriendshipService {
                 .user(fromUser)
                 .userEmail(fromEmail)
                 .friendEmail(toEmail)
-                .status(FriendshipStatus.WAITING)
+//                .status(FriendshipStatus.WAITING)
+                .status(FriendshipStatus.ACCEPT)
                 .isFrom(true) // 받는 사람은 이게 보내는 요청인지 아닌지 판단할 수 있다. (어디서 부터 받은 요청 인가?)
                 .build();
 
@@ -45,7 +46,8 @@ public class FriendshipService {
                 .user(toUser)
                 .userEmail(toEmail)
                 .friendEmail(fromEmail)
-                .status(FriendshipStatus.WAITING)
+//                .status(FriendshipStatus.WAITING)
+                .status(FriendshipStatus.ACCEPT)
                 .isFrom(false)
                 .build();
 
@@ -135,6 +137,11 @@ public class FriendshipService {
         friendshipRepository.save(counterFriendship);
 
         return "승인 성공";
+    }
+
+    public void deleteFriendship(String toEmail, String fromEmail) throws Exception {
+        Friendship friendship = friendshipRepository.findByUserEmailAndFriendEmail(toEmail,fromEmail).orElseThrow(() -> new Exception("친구 조회 실패"));
+        friendshipRepository.delete(friendship);
     }
 
     @Data

@@ -1,5 +1,6 @@
 package com.one.social_project.domain.friend.controller;
 
+import com.one.social_project.domain.email.dto.util.ResultDto;
 import com.one.social_project.domain.friend.dto.FriendshipResDto;
 import com.one.social_project.domain.friend.service.FriendshipService;
 import com.one.social_project.domain.user.entity.User;
@@ -41,5 +42,13 @@ public class FriendshipController {
     @ResponseStatus(HttpStatus.OK)
     public String approveFriendship (@Valid @PathVariable("id") Long friendshipId) throws Exception{
         return friendshipService.approveFriendshipRequest(friendshipId);
+    }
+
+    @DeleteMapping("/{email}")
+    public ResponseEntity<?> deleteFriendship (@AuthenticationPrincipal User user, @PathVariable("email") String email) throws Exception {
+        friendshipService.deleteFriendship(user.getEmail(), email);
+        FriendshipResDto friendshipResDto = new FriendshipResDto();
+        friendshipResDto.setMessage("친구를 삭제했습니다!");
+        return ResponseEntity.ok(friendshipResDto);
     }
 }
