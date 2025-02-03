@@ -8,23 +8,13 @@ import org.springframework.stereotype.Service;
 import com.one.social_project.domain.user.dto.user.UserDto;
 import com.one.social_project.domain.user.entity.User;
 import com.one.social_project.domain.user.repository.UserRepository;
-import com.one.social_project.domain.user.util.CustomUserDetails;
-import com.one.social_project.domain.user.util.RedisSessionManager;
-import com.one.social_project.domain.user.util.TokenProvider;
+
 import com.one.social_project.exception.errorCode.UserErrorCode;
 import com.one.social_project.exception.exception.UserException;
 import com.one.social_project.domain.user.dto.response.UserDtoResponse;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 
 @Service
@@ -32,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 public class UserService{
 
     private final UserRepository userRepository;
-    private final String s3Url = "https://sookyung-s3-bucket.s3.ap-northeast-2.amazonaws.com/";
 
     public UserDto getUserInfo(User user) {
         return user.toDto();
@@ -41,7 +30,7 @@ public class UserService{
     public String changeProfileImage(Long user ,String profileImage) {
         User findUser = userRepository.findById(user)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-        findUser.setProfileImg(s3Url + profileImage);
+        findUser.setProfileImg(profileImage);
         userRepository.save(findUser);
         return profileImage;
     }
