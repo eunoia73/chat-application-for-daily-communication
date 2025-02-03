@@ -13,6 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +32,7 @@ public class NotificationService {
         List<String> participants = response.getParticipants();
         //채팅방 생성자는 알림을 받을 필요가 없음
         participants.removeIf(participant -> participant.equals(response.getOwnerId()));
+        LocalDateTime createdAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime();
 
         for (String userId : participants) {
             String notificationId = UUID.randomUUID().toString();
@@ -42,6 +46,7 @@ public class NotificationService {
                     .roomId(response.getRoomId())
                     .roomType(response.getRoomType())
                     .roomName(response.getRoomName())
+                    .createdAt(createdAt)
                     .isRead(false)
                     .build();
 
