@@ -32,6 +32,6 @@ public class Notification {
     private String roomName;
     private boolean isRead; // 읽음 여부
 
-    @CreatedDate
+//    @CreatedDate
     private LocalDateTime createdAt;
 }
