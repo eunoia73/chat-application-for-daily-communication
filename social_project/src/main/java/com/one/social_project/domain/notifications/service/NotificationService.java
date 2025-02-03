@@ -88,7 +88,7 @@ public class NotificationService {
                 .roomType(notification.getRoomType())
                 .roomName(notification.getRoomName())
                 .isRead(true)
-                .createdAt(notification.getCreatedAt())
+                .createdAt(notification.getCreatedAt().plusHours(9))
                 .build();
 
         return notificationDTO;
