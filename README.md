@@ -1,5 +1,5 @@
 ## 모두를 위한 채팅 애플리케이션
-#### 25.01.07 ~ 25.02.06
+#### 개발기간 : 25.01.07 ~ 25.02.06
 
 ### 📄 프로젝트 개요
 
@@ -13,21 +13,13 @@
 
 학생 이서준 - 동아리 및 그룹 활동에서 빠르게 친구들과 소통하고, 파일이나 일정 공유 기능이 필요한 사용자
 
-### 
+## 🔗 배포 링크
+https://kdt-pt-1-pj-1-team01.elicecoding.com/login
 
+#### test 계정
 
-## ⚙️ 기술스택
-### backend
-<img src="https://img.shields.io/badge/java-20232a.svg?style=for-the-badge&logo=java&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/jpa-20232a.svg?style=for-the-badge&logo=jpa&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/springboot-20232a.svg?style=for-the-badge&logo=spring Boot&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/springsecurity-20232a.svg?style=for-the-badge&logo=springsecurity&logoColor=#6DB33F" />
-
-### database
-<img src="https://img.shields.io/badge/mysql-20232a.svg?style=for-the-badge&logo=mysql&logoColor=##4479A1" /> <img src="https://img.shields.io/badge/mongodb-20232a.svg?style=for-the-badge&logo=mongodb&logoColor=#47A248" /> 
-
-### cloud
-<img src="https://img.shields.io/badge/amazons3-20232a.svg?style=for-the-badge&logo=amazons3&logoColor=#569A31" /> <img src="https://img.shields.io/badge/awslambda-20232a.svg?style=for-the-badge&logo=awslambda&logoColor=#FF9900" /> 
-
-
-
+아이디 : elice@example.com <br>
+비밀번호 : example
 
 ## 🛠️ 구현기능
 ### 1. 파일 관리 (File Management) - 프로필 이미지, 채팅 이미지 전송
@@ -47,7 +39,41 @@
 * QueryDSL을 활용한 동적 쿼리 기반의 유저 검색 기능 구현
 * 페이징 처리 및 데이터베이스 인덱싱 최적화를 적용하여 검색 성능 향상
 
+## ⚙️ 기술스택
+### backend
+<img src="https://img.shields.io/badge/java-20232a.svg?style=for-the-badge&logo=java&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/jpa-20232a.svg?style=for-the-badge&logo=jpa&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/springboot-20232a.svg?style=for-the-badge&logo=spring Boot&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/springsecurity-20232a.svg?style=for-the-badge&logo=springsecurity&logoColor=#6DB33F" />
+
+### database
+<img src="https://img.shields.io/badge/mysql-20232a.svg?style=for-the-badge&logo=mysql&logoColor=##4479A1" /> <img src="https://img.shields.io/badge/mongodb-20232a.svg?style=for-the-badge&logo=mongodb&logoColor=#47A248" /> 
+
+### cloud
+<img src="https://img.shields.io/badge/amazons3-20232a.svg?style=for-the-badge&logo=amazons3&logoColor=#569A31" /> <img src="https://img.shields.io/badge/awslambda-20232a.svg?style=for-the-badge&logo=awslambda&logoColor=#FF9900" /> 
+
+
+## ⚙️ 아키텍쳐
+<img width="929" alt="스크린샷 2025-02-15 오후 3 19 13" src="https://github.com/user-attachments/assets/3041644e-9e42-4bfa-a4f0-ad2ee9f29543" />
 
 ## ⚙️ ERD
 <img width="1135" alt="스크린샷 2025-02-14 오후 11 43 01" src="https://github.com/user-attachments/assets/4179967b-656f-4faa-8c49-742a47eba49e" />
+
+## 🚨 트러블슈팅
+[Nginx 크기 제한 설정](https://velog.io/@eunoia73/spring-Nginx-%ED%81%AC%EA%B8%B0-%EC%A0%9C%ED%95%9C-%EC%84%A4%EC%A0%95)
+
+[한글 파일명 길이 제한으로 인한 파일 업로드 실패](https://velog.io/@eunoia73/Spring-org.springframework.dao.DataIntegrityViolationException)
+
+[JPA 트랜잭션 미설정으로 인한 알림 삭제 작업 실패](https://velog.io/@eunoia73/JPA-org.springframework.dao.InvalidDataAccessApiUsageException)
+
+[테스트 데이터 삽입 중 발생한 EntityExistsException 문제](https://velog.io/@eunoia73/JPA-jakarta.persistence.EntityExistsException-detached-entity-passed-to-persist)
+
+
+
+## 📝 메모
+[S3 버킷 생성 및 권한 설정](https://velog.io/@eunoia73/AWS-S3-%EB%B2%84%ED%82%B7-%EC%83%9D%EC%84%B1-%EB%B0%8F-%EA%B6%8C%ED%95%9C-%EC%84%A4%EC%A0%95)
+
+[IAM 액세스 키 발급받기](https://velog.io/@eunoia73/AWS-IAM-%EC%95%A1%EC%84%B8%EC%8A%A4-%ED%82%A4-%EB%B0%9C%EA%B8%89%EB%B0%9B%EA%B8%B0)
+
+[Lambda timeout 오류](https://velog.io/@eunoia73/AWS-Lambda-timeout-%EC%98%A4%EB%A5%98)
+
+
+
 
