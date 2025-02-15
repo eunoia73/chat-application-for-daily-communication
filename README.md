@@ -13,13 +13,6 @@
 
 학생 이서준 - 동아리 및 그룹 활동에서 빠르게 친구들과 소통하고, 파일이나 일정 공유 기능이 필요한 사용자
 
-## 🔗 배포 링크
-https://kdt-pt-1-pj-1-team01.elicecoding.com/login
-
-#### test 계정
-
-아이디 : elice@example.com <br>
-비밀번호 : example
 
 ## 🛠️ 구현기능
 ### 1. 파일 관리 (File Management) - 프로필 이미지, 채팅 이미지 전송
@@ -38,6 +31,8 @@ https://kdt-pt-1-pj-1-team01.elicecoding.com/login
 ### 3. 검색 기능 (Search System)
 * QueryDSL을 활용한 동적 쿼리 기반의 유저 검색 기능 구현
 * 페이징 처리 및 데이터베이스 인덱싱 최적화를 적용하여 검색 성능 향상
+
+
 
 ## ⚙️ 기술스택
 ### backend
@@ -65,8 +60,6 @@ https://kdt-pt-1-pj-1-team01.elicecoding.com/login
 
 [테스트 데이터 삽입 중 발생한 EntityExistsException 문제](https://velog.io/@eunoia73/JPA-jakarta.persistence.EntityExistsException-detached-entity-passed-to-persist)
 
-
-
 ## 📝 메모
 [S3 버킷 생성 및 권한 설정](https://velog.io/@eunoia73/AWS-S3-%EB%B2%84%ED%82%B7-%EC%83%9D%EC%84%B1-%EB%B0%8F-%EA%B6%8C%ED%95%9C-%EC%84%A4%EC%A0%95)
 
@@ -75,5 +68,31 @@ https://kdt-pt-1-pj-1-team01.elicecoding.com/login
 [Lambda timeout 오류](https://velog.io/@eunoia73/AWS-Lambda-timeout-%EC%98%A4%EB%A5%98)
 
 
+## 🎬 시연 영상 
+
+### 1. 프로필 이미지 등록
+
+https://github.com/user-attachments/assets/b2257c43-5e0b-428c-bb94-9e19e29cb763
 
 
+### 2-1. 채팅 이미지 발신
+
+https://github.com/user-attachments/assets/11a86e05-2cca-4fd7-83ce-efa83e1926b9
+
+### 2-2. 채팅 이미지 수신
+
+https://github.com/user-attachments/assets/daac66aa-6c12-434f-b7c7-f16585e0a8d6
+
+
+### 3. 유저 검색
+
+https://github.com/user-attachments/assets/e0e8a2c7-508b-471f-8a31-02183589fc1f
+
+
+## 🔗 배포 링크
+https://kdt-pt-1-pj-1-team01.elicecoding.com/login
+
+#### test 계정
+
+아이디 : elice@example.com <br>
+비밀번호 : example
