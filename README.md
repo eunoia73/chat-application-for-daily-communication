@@ -13,7 +13,6 @@
 
 학생 이서준 - 동아리 및 그룹 활동에서 빠르게 친구들과 소통하고, 파일이나 일정 공유 기능이 필요한 사용자
 
-
 ## 🛠️ 구현기능
 ### 1. 파일 관리 (File Management) - 프로필 이미지, 채팅 이미지 전송
  - AWS S3를 활용한 이미지 업로드, 다운로드, 삭제 기능 구현
@@ -32,7 +31,13 @@
 * QueryDSL을 활용한 동적 쿼리 기반의 유저 검색 기능 구현
 * 페이징 처리 및 데이터베이스 인덱싱 최적화를 적용하여 검색 성능 향상
 
+## 📄 API 명세서
 
+[전체 API 명세서](https://docs.google.com/spreadsheets/d/1G8_AqPqJMMwJgapfmnYmdf429MRi7Tmjv939TC2c8MU/edit?gid=0#gid=0)
+
+<img width="100%" alt="스크린샷 2025-02-16 오전 12 35 52" src="https://github.com/user-attachments/assets/c37850c0-ae46-41bd-bbab-734729bec9fe" />
+<img width="100%" alt="스크린샷 2025-02-16 오전 12 36 32" src="https://github.com/user-attachments/assets/ab39489a-8aba-4e5d-86ab-921ebf3663c8" />
+<img width="100%" alt="스크린샷 2025-02-16 오전 12 36 21" src="https://github.com/user-attachments/assets/7790eead-8354-4019-a080-ee38ee61c309" />
 
 ## ⚙️ 기술스택
 ### backend
