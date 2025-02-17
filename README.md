@@ -41,10 +41,10 @@
 
 ## ⚙️ 기술스택
 ### backend
-<img src="https://img.shields.io/badge/java-20232a.svg?style=for-the-badge&logo=java&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/jpa-20232a.svg?style=for-the-badge&logo=jpa&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/springboot-20232a.svg?style=for-the-badge&logo=spring Boot&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/springsecurity-20232a.svg?style=for-the-badge&logo=springsecurity&logoColor=#6DB33F" />
+<img src="https://img.shields.io/badge/java-20232a.svg?style=for-the-badge&logo=java&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/jpa-20232a.svg?style=for-the-badge&logo=jpa&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/springboot-20232a.svg?style=for-the-badge&logo=spring Boot&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/springsecurity-20232a.svg?style=for-the-badge&logo=springsecurity&logoColor=#6DB33F" /> <img src="https://img.shields.io/badge/websocket-20232a.svg?style=for-the-badge&logo=websocket&logoColor=#6DB33F" />
 
 ### database
-<img src="https://img.shields.io/badge/mysql-20232a.svg?style=for-the-badge&logo=mysql&logoColor=##4479A1" /> <img src="https://img.shields.io/badge/mongodb-20232a.svg?style=for-the-badge&logo=mongodb&logoColor=#47A248" /> 
+<img src="https://img.shields.io/badge/mysql-20232a.svg?style=for-the-badge&logo=mysql&logoColor=##4479A1" /> <img src="https://img.shields.io/badge/mongodb-20232a.svg?style=for-the-badge&logo=mongodb&logoColor=#47A248" /> <img src="https://img.shields.io/badge/redis-20232a.svg?style=for-the-badge&logo=redis&logoColor=##FF4438" /> 
 
 ### cloud
 <img src="https://img.shields.io/badge/amazons3-20232a.svg?style=for-the-badge&logo=amazons3&logoColor=#569A31" /> <img src="https://img.shields.io/badge/awslambda-20232a.svg?style=for-the-badge&logo=awslambda&logoColor=#FF9900" /> 
