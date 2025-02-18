@@ -49,6 +49,9 @@
 ### cloud
 <img src="https://img.shields.io/badge/amazons3-20232a.svg?style=for-the-badge&logo=amazons3&logoColor=#569A31" /> <img src="https://img.shields.io/badge/awslambda-20232a.svg?style=for-the-badge&logo=awslambda&logoColor=#FF9900" /> 
 
+### deploy
+<img src="https://img.shields.io/badge/nginx-20232a.svg?style=for-the-badge&logo=nginx&logoColor=##009639" /> <img src="https://img.shields.io/badge/docker-20232a.svg?style=for-the-badge&logo=docker&logoColor=#2496ED" />
+
 
 ## ⚙️ 아키텍쳐
 <img width="929" alt="스크린샷 2025-02-15 오후 3 19 13" src="https://github.com/user-attachments/assets/3041644e-9e42-4bfa-a4f0-ad2ee9f29543" />
@@ -101,3 +104,8 @@ https://kdt-pt-1-pj-1-team01.elicecoding.com/login
 
 아이디 : elice@example.com <br>
 비밀번호 : example
+
+## ✅ 확장 방안
+S3 파일 캐싱: 자주 사용되는 파일에 대해 캐싱을 적용하여 파일 다운로드 성능 개선.
+실시간 알림 기능 구현: SSE를 사용하여 실시간 알림을 제공할 수 있는 시스템을 추가. 이를 통해 사용자가 즉시 알림을 받을 수 있도록 개선.
+검색 기능 캐싱: (Redis 등)을 추가하여 검색 속도와 확장성을 개선.
