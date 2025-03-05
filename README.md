@@ -78,22 +78,18 @@
 ## 🎬 시연 영상 
 
 ### 1. 프로필 이미지 등록
-
-https://github.com/user-attachments/assets/b2257c43-5e0b-428c-bb94-9e19e29cb763
-
+<img src="https://github.com/user-attachments/assets/ab1fb64a-9bf5-48f0-bcca-9869720101eb" width="70%" height="70%">
 
 ### 2-1. 채팅 이미지 발신
-
-https://github.com/user-attachments/assets/11a86e05-2cca-4fd7-83ce-efa83e1926b9
+<img src="https://github.com/user-attachments/assets/1513cbe8-5123-4f4e-ad9f-f2701fad3a36" width="70%" height="70%">
 
 ### 2-2. 채팅 이미지 수신
 
-https://github.com/user-attachments/assets/daac66aa-6c12-434f-b7c7-f16585e0a8d6
-
+<img src="https://github.com/user-attachments/assets/b03f25b3-ed3e-4cb1-9673-0b358a80f3a0" width="70%" height="70%">
 
 ### 3. 유저 검색
 
-https://github.com/user-attachments/assets/e0e8a2c7-508b-471f-8a31-02183589fc1f
+<img src="https://github.com/user-attachments/assets/615f9942-4150-4be0-b5d5-c23c35ef17af" width="70%" height="70%">
 
 
 ## 🔗 배포 링크
